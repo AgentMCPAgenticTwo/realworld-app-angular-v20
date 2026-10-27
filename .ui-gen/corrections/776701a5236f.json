@@ -1,0 +1,248 @@
+{
+  "trace_id": "776701a5236f",
+  "branch": "ui-correction/776701a5236f",
+  "maintenance_branch": "ui-correction/776701a5236f",
+  "status": "SUCCESS",
+  "summary": "All my new specs pass (13 passing); the 5 failures are pre-existing scaffold specs (AppComponent title, and three `No provider for HttpClient` specs) that fail on the original checkout too — untouched as out of scope.\n\n**Reading taken:** item 1 (Tutorial entity, `/api/tutorials` endpoints, EF migration, CORS) is backend work and belongs to the separate `realworld-dotnet` repository, which I cannot edit from here — I implemented only the frontend side.\n\nWhat I changed here:\n- `src/environments/environment.ts` (new) — `apiUrl: 'http://localhost:5001/api'`.\n- `src/app/interceptors/api.interceptor.ts` (new) — prefixes relative request URLs with `environment.apiUrl`, leaves absolute URLs alone; registered via `HTTP_INTERCEPTORS` in `app.module.ts`.\n- `src/app/services/tutorial.service.ts` — base URL is now the relative `/tutorials`, resolved by the interceptor.\n- `src/app/models/tutorial.model.ts` — added `createdAt` / `updatedAt`.\n- `src/app/components/tutorial-drawer/` (new component) — right-hand side drawer with backdrop, showing title, description, published status and created/updated dates, Publish/UnPublish and Delete buttons, and an Edit link to `/tutorials/:id`; renders \"Not found\" on a 404 from the API.\n- `tutorials-list.component.{ts,html}` — clicking a list item now opens the drawer (by id, so the drawer re-fetches and can surface 404s); the drawer refreshes the list on change and clears selection on close. This replaced the inline read-only details panel in the list column.\n- Tests: new `tutorial-drawer.component.spec.ts` and `api.interceptor.spec.ts`, plus drawer open/close coverage added to `tutorials-list.component.spec.ts`.\n\nNote: the drawer reads `createdAt`/`updatedAt` as camelCase JSON; if the backend serializes those fields under different names, that mapping will need aligning once the endpoint exists.",
+  "files_changed": [
+    "src/app/app.module.ts",
+    "src/app/components/tutorial-drawer/tutorial-drawer.component.css",
+    "src/app/components/tutorial-drawer/tutorial-drawer.component.html",
+    "src/app/components/tutorial-drawer/tutorial-drawer.component.spec.ts",
+    "src/app/components/tutorial-drawer/tutorial-drawer.component.ts",
+    "src/app/components/tutorials-list/tutorials-list.component.html",
+    "src/app/components/tutorials-list/tutorials-list.component.spec.ts",
+    "src/app/components/tutorials-list/tutorials-list.component.ts",
+    "src/app/interceptors/api.interceptor.spec.ts",
+    "src/app/interceptors/api.interceptor.ts",
+    "src/app/models/tutorial.model.ts",
+    "src/app/services/tutorial.service.ts",
+    "src/environments/environment.ts"
+  ],
+  "lines_changed": 460,
+  "blockers": [
+    "Not applied -- Tutorials API: Tutorial entity, GET/POST/PUT/DELETE /api/tutorials, GET /api/tutorials/:id, GET /api/tutorials?title=, 404 handling, EF migration, CORS for http://localhost:4200: Backend work belonging to the counterpart repository realworld-dotnet, which is read-only reference here and outside this repo's allowed file paths",
+    "Visual verification failed: The /tutorials route renders only the search bar, 'Tutorials List' heading and Remove All button — the list is empty because the backend at http://localhost:5001/api is not running, so no tutorial can be clicked and the new side drawer (title/description/status/dates, Publish/Delete/Edit) is never visible. I could not script a click with a mocked API (command permissions denied), so the drawer feature could not be visually confirmed."
+  ],
+  "visual_check": {
+    "verdict": "fail",
+    "evidence": "The /tutorials route renders only the search bar, 'Tutorials List' heading and Remove All button — the list is empty because the backend at http://localhost:5001/api is not running, so no tutorial can be clicked and the new side drawer (title/description/status/dates, Publish/Delete/Edit) is never visible. I could not script a click with a mocked API (command permissions denied), so the drawer feature could not be visually confirmed.",
+    "screenshot_path": "/tmp/actual.png"
+  },
+  "context_sharing": {
+    "target": "frontend",
+    "branch": "ui-correction/776701a5236f",
+    "base_path": "http://localhost:5001/api",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/tutorials",
+        "request_fields": [],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "List all tutorials"
+      },
+      {
+        "method": "GET",
+        "path": "/tutorials?title={title}",
+        "request_fields": [
+          {
+            "name": "title",
+            "type": "string"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "Search tutorials by title via query string"
+      },
+      {
+        "method": "GET",
+        "path": "/tutorials/{id}",
+        "request_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "Fetch one tutorial for the details drawer; 404 renders 'Not found'"
+      },
+      {
+        "method": "POST",
+        "path": "/tutorials",
+        "request_fields": [
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          }
+        ],
+        "response_fields": [],
+        "purpose": "Create a tutorial"
+      },
+      {
+        "method": "PUT",
+        "path": "/tutorials/{id}",
+        "request_fields": [
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "message",
+            "type": "string"
+          }
+        ],
+        "purpose": "Update a tutorial / toggle published state"
+      },
+      {
+        "method": "DELETE",
+        "path": "/tutorials/{id}",
+        "request_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          }
+        ],
+        "response_fields": [],
+        "purpose": "Delete one tutorial"
+      },
+      {
+        "method": "DELETE",
+        "path": "/tutorials",
+        "request_fields": [],
+        "response_fields": [],
+        "purpose": "Delete all tutorials"
+      }
+    ],
+    "types": {
+      "Tutorial": [
+        {
+          "name": "id",
+          "type": "unknown"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "published",
+          "type": "boolean"
+        },
+        {
+          "name": "createdAt",
+          "type": "string"
+        },
+        {
+          "name": "updatedAt",
+          "type": "string"
+        }
+      ]
+    },
+    "notes": "Services use the relative path '/tutorials'; ApiInterceptor prefixes every non-absolute URL with environment.apiUrl ('http://localhost:5001/api'), so the effective base is http://localhost:5001/api. All Tutorial fields are optional; id is declared `any`, and createdAt/updatedAt are typed string and rendered raw. PUT responses are read for an optional `message` string; GET /tutorials/{id} must return 404 (not an empty body) for missing ids."
+  },
+  "usage": {
+    "num_turns": 42,
+    "duration_ms": 200355,
+    "total_cost_usd": 0.8478813999999999,
+    "input_tokens": 3053,
+    "output_tokens": 14210,
+    "cache_creation_input_tokens": 52295,
+    "cache_read_input_tokens": 1036068,
+    "is_error": false
+  }
+}

@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Tutorial } from '../models/tutorial.model';
 
-const baseUrl = 'http://localhost:8080/api/tutorials';
+// The ApiInterceptor prefixes this relative path with environment.apiUrl.
+const baseUrl = '/tutorials';
 
 @Injectable({
   providedIn: 'root',

@@ -12,6 +12,7 @@ export class TutorialsListComponent implements OnInit {
   currentTutorial: Tutorial = {};
   currentIndex = -1;
   title = '';
+  drawerTutorialId: any = null;
 
   constructor(private tutorialService: TutorialService) {}
 
@@ -33,11 +34,19 @@ export class TutorialsListComponent implements OnInit {
     this.retrieveTutorials();
     this.currentTutorial = {};
     this.currentIndex = -1;
+    this.drawerTutorialId = null;
   }
 
   setActiveTutorial(tutorial: Tutorial, index: number): void {
     this.currentTutorial = tutorial;
     this.currentIndex = index;
+    this.drawerTutorialId = tutorial.id;
+  }
+
+  closeDrawer(): void {
+    this.drawerTutorialId = null;
+    this.currentTutorial = {};
+    this.currentIndex = -1;
   }
 
   removeAllTutorials(): void {
@@ -53,6 +62,7 @@ export class TutorialsListComponent implements OnInit {
   searchTitle(): void {
     this.currentTutorial = {};
     this.currentIndex = -1;
+    this.drawerTutorialId = null;
 
     this.tutorialService.findByTitle(this.title).subscribe({
       next: (data) => {
