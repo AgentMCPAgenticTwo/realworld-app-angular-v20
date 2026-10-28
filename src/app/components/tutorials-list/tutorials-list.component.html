@@ -1,41 +1,56 @@
-<div class="list row">
-  <div class="col-md-8">
-    <div class="input-group mb-3">
-      <input
-        type="text"
-        class="form-control"
-        placeholder="Search by title"
-        [(ngModel)]="title"
-      />
-      <div class="input-group-append">
-        <button
-          class="btn btn-outline-secondary"
-          type="button"
-          (click)="searchTitle()"
-        >
-          Search
-        </button>
-      </div>
+<div class="list">
+  <div class="list-header">
+    <div>
+      <h4 class="tm-section-title">Tutorials</h4>
+      <p class="tm-subtitle">Browse, search and manage your tutorials</p>
     </div>
-  </div>
-  <div class="col-md-6">
-    <h4>Tutorials List</h4>
-    <ul class="list-group">
-      @for (tutorial of tutorials; track tutorial.id; let i = $index) {
-      <li
-        class="list-group-item"
-        [class.active]="i == currentIndex"
-        (click)="setActiveTutorial(tutorial, i)"
-      >
-        {{ tutorial.title }}
-      </li>
-      }
-    </ul>
-
-    <button class="m-3 btn btn-sm btn-danger" (click)="removeAllTutorials()">
+    <button class="tm-btn tm-btn-danger" (click)="removeAllTutorials()">
       Remove All
     </button>
   </div>
+
+  <div class="search-bar tm-card">
+    <span class="search-icon" aria-hidden="true">&#128269;</span>
+    <input
+      type="text"
+      class="form-control search-input"
+      placeholder="Search by title"
+      [(ngModel)]="title"
+    />
+    <button class="tm-btn tm-btn-primary" type="button" (click)="searchTitle()">
+      Search
+    </button>
+  </div>
+
+  @if (tutorials && tutorials.length) {
+  <div class="card-grid">
+    @for (tutorial of tutorials; track tutorial.id; let i = $index) {
+    <article
+      class="tutorial-card tm-card"
+      [class.active]="i == currentIndex"
+      (click)="setActiveTutorial(tutorial, i)"
+    >
+      <div class="tutorial-card-top">
+        <h5 class="tutorial-title">{{ tutorial.title }}</h5>
+        @if (tutorial.published) {
+        <span class="tm-pill tm-pill-published">Published</span>
+        } @else {
+        <span class="tm-pill tm-pill-pending">Pending</span>
+        }
+      </div>
+      <p class="tutorial-description">{{ tutorial.description }}</p>
+      <span class="tutorial-cta">View details &rarr;</span>
+    </article>
+    }
+  </div>
+  } @else {
+  <div class="tm-empty">
+    <div class="tm-empty-icon" aria-hidden="true">&#128218;</div>
+    <h5>No tutorials yet</h5>
+    <p>Try a different search, or add your first tutorial to get started.</p>
+  </div>
+  }
+
   <app-tutorial-drawer
     [tutorialId]="drawerTutorialId"
     (changed)="retrieveTutorials()"

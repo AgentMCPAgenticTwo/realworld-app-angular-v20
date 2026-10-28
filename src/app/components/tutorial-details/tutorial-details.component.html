@@ -1,29 +1,40 @@
 @if (viewMode){
   @if (currentTutorial.id){
-  <h4>Tutorial</h4>
-  <div>
-    <label><strong>Title:</strong></label> {{ currentTutorial.title }}
-  </div>
-  <div>
-    <label><strong>Description:</strong></label>
-    {{ currentTutorial.description }}
-  </div>
-  <div>
-    <label><strong>Status:</strong></label>
-    {{ currentTutorial.published ? "Published" : "Pending" }}
-  </div>
+  <div class="view-card tm-card">
+    <h4 class="tm-section-title">Tutorial</h4>
+    <div class="detail-row">
+      <span class="tm-label">Title</span> {{ currentTutorial.title }}
+    </div>
+    <div class="detail-row">
+      <span class="tm-label">Description</span>
+      {{ currentTutorial.description }}
+    </div>
+    <div class="detail-row">
+      <span class="tm-label">Status</span>
+      @if (currentTutorial.published) {
+      <span class="tm-pill tm-pill-published">Published</span>
+      } @else {
+      <span class="tm-pill tm-pill-pending">Pending</span>
+      }
+    </div>
 
-  <a class="badge badge-warning" routerLink="/tutorials/{{ currentTutorial.id }}">
-    Edit
-  </a>
-  } @else {<p>Please click on a Tutorial...</p>}
+    <a
+      class="tm-btn tm-btn-ghost"
+      routerLink="/tutorials/{{ currentTutorial.id }}"
+    >
+      Edit
+    </a>
+  </div>
+  } @else {<p class="tm-empty">Please click on a Tutorial...</p>}
 } @else {
   @if (currentTutorial.id) {
-  <div class="edit-form">
-    <h4>Tutorial</h4>
+  <div class="edit-form tm-card">
+    <h4 class="tm-section-title">Edit Tutorial</h4>
+    <p class="tm-subtitle mb-4">Update the details of this tutorial</p>
+
     <form>
       <div class="form-group">
-        <label for="title">Title</label>
+        <label class="tm-label" for="title">Title</label>
         <input
           type="text"
           class="form-control"
@@ -33,7 +44,7 @@
         />
       </div>
       <div class="form-group">
-        <label for="description">Description</label>
+        <label class="tm-label" for="description">Description</label>
         <input
           type="text"
           class="form-control"
@@ -43,34 +54,44 @@
         />
       </div>
 
-      <div class="form-group">
-        <label><strong>Status:</strong></label>
-        {{ currentTutorial.published ? "Published" : "Pending" }}
+      <div class="form-group status-group">
+        <span class="tm-label">Status</span>
+        @if (currentTutorial.published) {
+        <span class="tm-pill tm-pill-published">Published</span>
+        } @else {
+        <span class="tm-pill tm-pill-pending">Pending</span>
+        }
       </div>
     </form>
 
-    @if (currentTutorial.published) {
-    <button class="badge badge-primary mr-2"
-      (click)="updatePublished(false)" >
-      UnPublish
-    </button>
-    } @else {
-    <button class="badge badge-primary mr-2" (click)="updatePublished(true)">
-      Publish
-    </button>
+    @if (message) {
+    <div class="alert alert-success" role="alert">{{ message }}</div>
     }
 
-    <button class="badge badge-danger mr-2" (click)="deleteTutorial()">
-      Delete
-    </button>
+    <div class="form-actions">
+      <button class="tm-btn tm-btn-danger" (click)="deleteTutorial()">
+        Delete
+      </button>
 
-    <button
-      type="submit"
-      class="badge badge-success mb-2"
-      (click)="updateTutorial()">
-      Update
-    </button>
-    <p>{{ message }}</p>
+      <span class="form-actions-right">
+        @if (currentTutorial.published) {
+        <button class="tm-btn tm-btn-ghost" (click)="updatePublished(false)">
+          UnPublish
+        </button>
+        } @else {
+        <button class="tm-btn tm-btn-ghost" (click)="updatePublished(true)">
+          Publish
+        </button>
+        }
+
+        <button
+          type="submit"
+          class="tm-btn tm-btn-primary"
+          (click)="updateTutorial()">
+          Update
+        </button>
+      </span>
+    </div>
   </div>
-  } @else {<p>Cannot access this Tutorial...</p>}
+  } @else {<p class="tm-empty">Cannot access this Tutorial...</p>}
 }

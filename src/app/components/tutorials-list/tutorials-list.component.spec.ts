@@ -37,9 +37,34 @@ describe('TutorialsListComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('renders a card with a status pill for each tutorial', () => {
+    const card: HTMLElement =
+      fixture.nativeElement.querySelector('.tutorial-card');
+
+    expect(card.querySelector('.tutorial-title')?.textContent).toContain(
+      'Angular'
+    );
+    expect(card.querySelector('.tutorial-description')?.textContent).toContain(
+      'desc'
+    );
+    expect(card.querySelector('.tm-pill-pending')?.textContent).toContain(
+      'Pending'
+    );
+  });
+
+  it('shows the empty state when there is no tutorial', () => {
+    component.tutorials = [];
+    fixture.detectChanges();
+
+    const empty: HTMLElement = fixture.nativeElement.querySelector('.tm-empty');
+    expect(empty).not.toBeNull();
+    expect(empty.querySelector('.tm-empty-icon')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.tutorial-card')).toBeNull();
+  });
+
   it('opens the drawer when a tutorial is clicked', () => {
     const item: HTMLElement =
-      fixture.nativeElement.querySelector('.list-group-item');
+      fixture.nativeElement.querySelector('.tutorial-card');
     item.click();
     fixture.detectChanges();
 

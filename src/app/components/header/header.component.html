@@ -1,0 +1,28 @@
+<nav class="navbar navbar-expand navbar-dark tm-navbar">
+  <div class="container">
+    <a routerLink="/tutorials" class="navbar-brand tm-brand">
+      <span class="tm-brand-mark">TM</span>
+      {{ brand }}
+    </a>
+    <div class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a
+          routerLink="/tutorials"
+          routerLinkActive="active"
+          class="nav-link tm-nav-link"
+        >
+          Tutorials
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          routerLink="/add"
+          routerLinkActive="active"
+          class="nav-link tm-nav-link"
+        >
+          Add Tutorial
+        </a>
+      </li>
+    </div>
+  </div>
+</nav>
