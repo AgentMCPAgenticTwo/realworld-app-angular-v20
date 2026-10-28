@@ -1,13 +1,13 @@
 ---
 type: Playbook
 title: Common tasks
-description: Where to go to change routes, API calls, the data model, the styling or the detail drawer.
+description: Where to go to change routes, API calls, the data model, categories, the styling or the detail drawer.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [playbook, howto]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-28T11:34:18Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ a86d8471057ca0f210893c4f79a11417f67af92e
     title: Codebase knowledge graph
 status: stable
 ---
@@ -21,8 +21,10 @@ Edit `apiUrl` in `src/environments/environment.ts`. Do not touch `baseUrl` in
 
 # Add or change a REST call
 
-1. Add the method to `TutorialService` in `src/app/services/tutorial.service.ts`,
-   returning an `Observable` from `HttpClient` with a path relative to `baseUrl`.
+1. Add the method to the service for that resource —
+   `src/app/services/tutorial.service.ts` or `src/app/services/category.service.ts` —
+   returning an `Observable` from `HttpClient` with a path relative to that file's
+   `baseUrl`. A new REST resource gets its own `<Name>Service`.
 2. Subscribe from the component with the `{ next, error }` object form.
 
 See [services](/modules/services.md) and [Conventions](/conventions.md).
@@ -42,6 +44,20 @@ See [services](/modules/services.md) and [Conventions](/conventions.md).
 5. Add the field to the `article.tutorial-card` markup in
    `tutorials-list.component.html` if it should appear in the list — the list is a
    card grid, not a table.
+
+`categoryId` is the worked example of all five steps; copy it.
+
+# Work with categories
+
+| Need | Where |
+| --- | --- |
+| Fetch the list of categories | `CategoryService.getAll` in `src/app/services/category.service.ts` |
+| Add the dropdown to a screen | a `retrieveCategories()` call in `ngOnInit` plus a `select` with an `[ngValue]="null"` placeholder — see `add-tutorial.component.html:30` |
+| Show a category name | resolve `categoryId` against the local `categories` array (`TutorialsListComponent.categoryName`, line 63) and render a `tm-pill tm-pill-category` |
+| Change how the list filters | `TutorialsListComponent.applyCategoryFilter` (line 52); it is client-side, so the template iterates `filteredTutorials`, not `tutorials` |
+
+Anything that refetches tutorials must call `applyCategoryFilter()` afterwards, or the
+filter silently resets. `TutorialDrawerComponent` has no category support yet.
 
 # Add a new screen
 
@@ -83,7 +99,8 @@ There are two detail surfaces that must usually be changed together:
 
 Both implement `getTutorial`, `updatePublished` and `deleteTutorial`. The drawer
 additionally emits `changed` so the list refreshes, and handles HTTP 404 via
-`notFound`. See
+`notFound`. They are not identical: the routed component's `updatePublished` sends
+`categoryId`, the drawer's does not. See
 [tutorial-details](/modules/components-tutorial-details.md) and
 [tutorial-drawer](/modules/components-tutorial-drawer.md).
 

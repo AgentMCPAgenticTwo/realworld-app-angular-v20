@@ -1,22 +1,22 @@
 ---
 type: Codebase Overview
 title: realworld-app-angular-v20
-description: Angular 17 CRUD single-page app for managing tutorials against a REST backend.
+description: Angular 17 CRUD single-page app for managing categorised tutorials against a REST backend.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/
 tags: [angular, typescript, crud, frontend]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-28T11:34:18Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ a86d8471057ca0f210893c4f79a11417f67af92e
     title: Codebase knowledge graph
 status: stable
 ---
 
 # Purpose
 
-A tutorial-management CRUD demo: list, search, create, inspect, publish/unpublish and
-delete `Tutorial` records held by a REST backend. All UI lives in one Angular
-`NgModule` application bootstrapped from `src/main.ts`.
+A tutorial-management CRUD demo: list, search, filter by category, create, inspect,
+publish/unpublish and delete `Tutorial` records held by a REST backend. All UI lives
+in one Angular `NgModule` application bootstrapped from `src/main.ts`.
 
 # Stack
 
@@ -55,7 +55,10 @@ Package name in `package.json` is `angular-17-crud`.
 
 # Backend contract
 
-`src/app/services/tutorial.service.ts` calls the relative base path `/tutorials`.
+`src/app/services/tutorial.service.ts` calls the relative base path `/tutorials` and
+`src/app/services/category.service.ts` calls `/categories`. Tutorials reference a
+category through the `categoryId` foreign key; there is no nested category payload,
+and the category filter on the list screen is applied in the browser.
 `src/app/interceptors/api.interceptor.ts` rewrites every relative request to
 `environment.apiUrl`, which is `http://localhost:5001/api` in
 `src/environments/environment.ts`.
