@@ -4,10 +4,10 @@ title: src/app/components/tutorials-list
 description: List screen with title search, bulk delete and an inline detail drawer.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app/components/tutorials-list
 tags: [component, list, search]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-27T12:01:30Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 0e3b5208a2e4f08afb8000ab0a8fa4e0d0ff5487
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
     title: Codebase knowledge graph
 status: stable
 ---
@@ -37,7 +37,23 @@ routed at `tutorials`.
 | `removeAllTutorials` | 52 | `TutorialService.deleteAll()` then `refreshList` |
 | `searchTitle` | 62 | `TutorialService.findByTitle(title)` → `tutorials` |
 
-# Template wiring
+# Template
+
+`tutorials-list.component.html` is a card layout, not a table:
+
+| Region | Markup | Notes |
+| --- | --- | --- |
+| Header | `.list-header` | `tm-section-title` + `tm-subtitle`, and the `Remove All` danger button |
+| Search | `.search-bar.tm-card` | `.search-icon`, `input.search-input` bound to `title`, Search button calling `searchTitle()` |
+| Results | `.card-grid` → `article.tutorial-card.tm-card` | `@for` over `tutorials` with `track tutorial.id`; `[class.active]` marks `currentIndex`; whole card calls `setActiveTutorial(tutorial, i)` |
+| Status | `.tm-pill-published` / `.tm-pill-pending` | Derived from `tutorial.published` |
+| Empty | `.tm-empty` + `.tm-empty-icon` | Rendered by the `@else` branch when `tutorials` is empty |
+
+The `tm-*` classes come from `src/styles.css`; card, grid and pill layout live in
+`tutorials-list.component.css`. See the styling section of
+[Conventions](/conventions.md).
+
+# Drawer wiring
 
 `tutorials-list.component.html` renders `<app-tutorial-drawer>` with
 `[tutorialId]="drawerTutorialId"`, `(changed)="retrieveTutorials()"` and
