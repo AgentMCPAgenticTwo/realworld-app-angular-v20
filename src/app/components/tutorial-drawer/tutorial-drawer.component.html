@@ -1,0 +1,60 @@
+@if (open) {
+<div class="drawer-backdrop" (click)="close()"></div>
+<aside class="drawer" role="dialog" aria-label="Tutorial details">
+  <div class="drawer-header">
+    <h4>Tutorial Details</h4>
+    <button type="button" class="close" aria-label="Close" (click)="close()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+
+  <div class="drawer-body">
+    @if (notFound) {
+    <p>Not found</p>
+    } @else if (currentTutorial.id) {
+    <div>
+      <label><strong>Title:</strong></label> {{ currentTutorial.title }}
+    </div>
+    <div>
+      <label><strong>Description:</strong></label>
+      {{ currentTutorial.description }}
+    </div>
+    <div>
+      <label><strong>Status:</strong></label>
+      {{ currentTutorial.published ? "Published" : "Pending" }}
+    </div>
+    <div>
+      <label><strong>Created:</strong></label> {{ currentTutorial.createdAt }}
+    </div>
+    <div>
+      <label><strong>Updated:</strong></label> {{ currentTutorial.updatedAt }}
+    </div>
+
+    <div class="mt-3">
+      @if (currentTutorial.published) {
+      <button class="badge badge-primary mr-2" (click)="updatePublished(false)">
+        UnPublish
+      </button>
+      } @else {
+      <button class="badge badge-primary mr-2" (click)="updatePublished(true)">
+        Publish
+      </button>
+      }
+
+      <button class="badge badge-danger mr-2" (click)="deleteTutorial()">
+        Delete
+      </button>
+
+      <a
+        class="badge badge-warning"
+        routerLink="/tutorials/{{ currentTutorial.id }}"
+        (click)="close()"
+      >
+        Edit
+      </a>
+    </div>
+    <p>{{ message }}</p>
+    }
+  </div>
+</aside>
+}

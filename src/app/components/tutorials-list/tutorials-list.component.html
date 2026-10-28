@@ -36,10 +36,9 @@
       Remove All
     </button>
   </div>
-  <div class="col-md-6">
-    <app-tutorial-details
-      [viewMode]="true"
-      [currentTutorial]="currentTutorial"
-    ></app-tutorial-details>
-  </div>
+  <app-tutorial-drawer
+    [tutorialId]="drawerTutorialId"
+    (changed)="retrieveTutorials()"
+    (closed)="closeDrawer()"
+  ></app-tutorial-drawer>
 </div>
