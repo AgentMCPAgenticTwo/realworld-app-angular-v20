@@ -1,4 +1,39 @@
-.edit-form {
-  max-width: 400px;
+.edit-form,
+.view-card {
+  max-width: 480px;
   margin: auto;
+  padding: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.1rem;
+}
+
+.status-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-row {
+  margin-bottom: 0.75rem;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.form-actions-right {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+
+.alert {
+  border-radius: 12px;
+  border: none;
+  margin-bottom: 0;
 }

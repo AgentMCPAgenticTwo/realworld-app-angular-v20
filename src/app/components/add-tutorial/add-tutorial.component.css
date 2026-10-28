@@ -1,4 +1,21 @@
 .submit-form {
-  max-width: 400px;
+  max-width: 480px;
   margin: auto;
+  padding: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.1rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.alert {
+  border-radius: 12px;
+  border: none;
 }

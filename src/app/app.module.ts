@@ -9,6 +9,7 @@ import { AddTutorialComponent } from './components/add-tutorial/add-tutorial.com
 import { TutorialDetailsComponent } from './components/tutorial-details/tutorial-details.component';
 import { TutorialsListComponent } from './components/tutorials-list/tutorials-list.component';
 import { TutorialDrawerComponent } from './components/tutorial-drawer/tutorial-drawer.component';
+import { HeaderComponent } from './components/header/header.component';
 import { ApiInterceptor } from './interceptors/api.interceptor';
 
 @NgModule({
@@ -17,7 +18,8 @@ import { ApiInterceptor } from './interceptors/api.interceptor';
     AddTutorialComponent,
     TutorialDetailsComponent,
     TutorialsListComponent,
-    TutorialDrawerComponent
+    TutorialDrawerComponent,
+    HeaderComponent
   ],
   imports: [
     BrowserModule,

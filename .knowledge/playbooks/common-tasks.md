@@ -1,13 +1,13 @@
 ---
 type: Playbook
 title: Common tasks
-description: Where to go to change routes, API calls, the data model or the detail drawer.
+description: Where to go to change routes, API calls, the data model, the styling or the detail drawer.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [playbook, howto]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-27T12:01:30Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 0e3b5208a2e4f08afb8000ab0a8fa4e0d0ff5487
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
     title: Codebase knowledge graph
 status: stable
 ---
@@ -39,7 +39,9 @@ See [services](/modules/services.md) and [Conventions](/conventions.md).
    `TutorialDetailsComponent.updatePublished` and
    `TutorialDrawerComponent.updatePublished` — those PUT only title, description and
    published.
-5. Add the column to `tutorials-list.component.html` if it should appear in the list.
+5. Add the field to the `article.tutorial-card` markup in
+   `tutorials-list.component.html` if it should appear in the list — the list is a
+   card grid, not a table.
 
 # Add a new screen
 
@@ -47,9 +49,28 @@ See [services](/modules/services.md) and [Conventions](/conventions.md).
 2. Declare the component in `declarations` in `src/app/app.module.ts` — components
    are not standalone.
 3. Add a `{ path, component }` entry to `routes` in `src/app/app-routing.module.ts`.
-4. Link to it from the navbar in `src/app/app.component.html`.
+4. Add a `<li class="nav-item">` link to
+   `src/app/components/header/header.component.html` — the navigation is no longer in
+   `app.component.html`.
+5. Build the markup out of the shared `tm-*` classes (`tm-card`, `tm-section-title`,
+   `tm-btn …`) rather than new bespoke styles.
 
-See [the shell module](/modules/app-shell.md).
+See [the shell module](/modules/app-shell.md) and
+[header](/modules/components-header.md).
+
+# Change the look of the app
+
+| Change | File |
+| --- | --- |
+| Palette, radius, shadow, transition | the `:root` custom properties in `src/styles.css` |
+| A shared surface, button, pill, label or empty state | the matching `.tm-*` rule in `src/styles.css` |
+| Layout of one screen only | that component's `.css` (`.card-grid`, `.search-bar`, `.form-actions`, `.detail-row`) |
+| Page frame, sticky footer | `src/app/app.component.css` |
+| Navigation bar skin | `src/app/components/header/header.component.css` |
+| Web font | the `<link>` tags in `src/index.html` and the `body` rule in `src/styles.css` |
+
+Add a class to `src/styles.css` as soon as a second screen needs it; keep one-off
+layout local. See the styling section of [Conventions](/conventions.md).
 
 # Change tutorial detail behaviour
 

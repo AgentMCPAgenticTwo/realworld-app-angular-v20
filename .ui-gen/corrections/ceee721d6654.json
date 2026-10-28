@@ -1,0 +1,275 @@
+{
+  "trace_id": "ceee721d6654",
+  "branch": "ui-correction/ceee721d6654",
+  "maintenance_branch": "ui-correction/ceee721d6654",
+  "status": "SUCCESS",
+  "summary": "Done. All component tests pass (25/26; the one failure is the pre-existing `TutorialService` spec, which I left untouched since it isn't a component test and the service is out of scope).\n\n**What I changed:**\n\n1. **`src/app/components/header/`** (new) — `HeaderComponent` with an indigo→purple gradient navbar, a \"TM\" mark + \"Tutorial Manager\" logo, and \"Tutorials\" / \"Add Tutorial\" links highlighted via `routerLinkActive`; declared in `AppModule`. `app.component.html` now renders `<app-header>`, the routed content, and a simple footer (`app.component.css`).\n2. **Tutorials list** — responsive grid of rounded cards with soft shadows that lift on hover, each with the title, a two-line clamped description, and a green **Published** / amber **Pending** pill; a rounded search bar on top, a friendly empty state with a book icon, and a red pill \"Remove All\" button.\n3. **Add / Edit pages** — centered rounded cards, rounded inputs with an indigo focus glow, right-aligned action rows, and success messages rendered as Bootstrap `alert alert-success` (the edit page's `{{ message }}` paragraph became a conditional alert).\n4. **Global** — Inter linked in `src/index.html`; `src/styles.css` now holds the shared design tokens (colors, radius, shadows, transitions) and reusable `tm-card` / `tm-btn` / `tm-input` / `tm-pill` / `tm-empty` classes used by every component, on a light grey page background.\n\nTests updated: `header.component.spec.ts` (new), `app.component.spec.ts` (replaced the stale `angular-17-crud` title/h1 assertions with header+footer rendering), `tutorials-list` (card/pill and empty-state cases, drawer click now targets `.tutorial-card`), `add-tutorial` and `tutorial-details` (added the missing `HttpClientTestingModule`/`FormsModule`/`RouterTestingModule` they needed and asserted the new card + alert markup).\n\nReading taken: visual-only — no service, routing, or component logic was touched, and `angular.json`/`package.json` are unchanged (Bootstrap 4 and NgModule kept). Nothing here belonged to the backend repository.",
+  "files_changed": [
+    "src/app/app.component.css",
+    "src/app/app.component.html",
+    "src/app/app.component.spec.ts",
+    "src/app/app.module.ts",
+    "src/app/components/add-tutorial/add-tutorial.component.css",
+    "src/app/components/add-tutorial/add-tutorial.component.html",
+    "src/app/components/add-tutorial/add-tutorial.component.spec.ts",
+    "src/app/components/header/header.component.css",
+    "src/app/components/header/header.component.html",
+    "src/app/components/header/header.component.spec.ts",
+    "src/app/components/header/header.component.ts",
+    "src/app/components/tutorial-details/tutorial-details.component.css",
+    "src/app/components/tutorial-details/tutorial-details.component.html",
+    "src/app/components/tutorial-details/tutorial-details.component.spec.ts",
+    "src/app/components/tutorials-list/tutorials-list.component.css",
+    "src/app/components/tutorials-list/tutorials-list.component.html",
+    "src/app/components/tutorials-list/tutorials-list.component.spec.ts",
+    "src/index.html",
+    "src/styles.css"
+  ],
+  "lines_changed": 904,
+  "blockers": [
+    "Not applied -- Fixing the failing TutorialService spec (missing HttpClient provider): Pre-existing failure in a service spec, not a component test; services were explicitly out of scope",
+    "Not applied -- Restyling the tutorial drawer: Not named in the request; left alone to keep the diff proportionate"
+  ],
+  "conventions": [],
+  "visual_check": {
+    "verdict": "pass",
+    "evidence": "Both /tutorials and /add render the new indigo-to-purple gradient navbar with the 'Tutorial Manager' logo, active-link highlight, and a footer; the list page shows a rounded search bar, red 'Remove All' button and a friendly empty state (no backend data, so cards couldn't be shown), and /add shows a centered rounded card with rounded inputs and an aligned Submit button, all on a light grey background in the Inter font. Only nit: the emoji/icon glyphs in the search field and empty state render as tofu boxes in the headless browser.",
+    "screenshot_path": "/tmp/actual.png"
+  },
+  "context_sharing": {
+    "target": "frontend",
+    "branch": "ui-correction/ceee721d6654",
+    "base_path": "http://localhost:5001/api",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/tutorials",
+        "request_fields": [],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "List all tutorials"
+      },
+      {
+        "method": "GET",
+        "path": "/tutorials?title={title}",
+        "request_fields": [
+          {
+            "name": "title",
+            "type": "string"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "Search tutorials by title substring"
+      },
+      {
+        "method": "GET",
+        "path": "/tutorials/{id}",
+        "request_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "Fetch one tutorial"
+      },
+      {
+        "method": "POST",
+        "path": "/tutorials",
+        "request_fields": [
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "Create a tutorial"
+      },
+      {
+        "method": "PUT",
+        "path": "/tutorials/{id}",
+        "request_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          }
+        ],
+        "response_fields": [],
+        "purpose": "Update a tutorial or toggle its published flag"
+      },
+      {
+        "method": "DELETE",
+        "path": "/tutorials/{id}",
+        "request_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          }
+        ],
+        "response_fields": [],
+        "purpose": "Delete one tutorial"
+      },
+      {
+        "method": "DELETE",
+        "path": "/tutorials",
+        "request_fields": [],
+        "response_fields": [],
+        "purpose": "Delete all tutorials"
+      }
+    ],
+    "types": {
+      "Tutorial": [
+        {
+          "name": "id",
+          "type": "unknown"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "published",
+          "type": "boolean"
+        },
+        {
+          "name": "createdAt",
+          "type": "string"
+        },
+        {
+          "name": "updatedAt",
+          "type": "string"
+        }
+      ]
+    },
+    "notes": "All service paths in src/app/services/tutorial.service.ts are relative ('/tutorials'); ApiInterceptor (src/app/interceptors/api.interceptor.ts) prefixes environment.apiUrl ('http://localhost:5001/api') to any non-absolute URL, so the effective base is http://localhost:5001/api. Every Tutorial field is optional in the model, `id` is declared `any`, and createdAt/updatedAt are declared as strings (not date objects); the changed files are UI/CSS/template-only and add no new endpoints. Client routes are /tutorials, /tutorials/:id and /add."
+  },
+  "usage": {
+    "num_turns": 56,
+    "duration_ms": 276578,
+    "total_cost_usd": 1.4322186000000001,
+    "input_tokens": 3367,
+    "output_tokens": 21021,
+    "cache_creation_input_tokens": 49402,
+    "cache_read_input_tokens": 2697142,
+    "is_error": false
+  }
+}

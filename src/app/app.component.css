@@ -1,0 +1,27 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-shell main {
+  flex: 1 0 auto;
+}
+
+.app-footer {
+  background: #fff;
+  border-top: 1px solid var(--tm-border, #e5e7eb);
+  padding: 1.25rem 0;
+  font-size: 0.85rem;
+  color: var(--tm-muted, #6b7280);
+}
+
+.app-footer .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-footer-note {
+  opacity: 0.8;
+}

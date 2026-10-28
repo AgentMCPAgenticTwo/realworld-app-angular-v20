@@ -1,12 +1,12 @@
 {
     "schema_version": 2,
-    "commit": "0e3b5208a2e4f08afb8000ab0a8fa4e0d0ff5487",
-    "indexed_at": "2026-10-27T12:01:30Z",
+    "commit": "6878a25eb09b858a48f0956018c2d975cf0182bb",
+    "indexed_at": "2026-10-28T04:04:00Z",
     "project": "realworld-app-angular-v20",
-    "nodes": 212,
-    "edges": 327,
-    "original_size": 2097152,
-    "compressed_size": 93312,
+    "nodes": 377,
+    "edges": 503,
+    "original_size": 2228224,
+    "compressed_size": 125776,
     "compression_level": 9,
     "reconcile_basis": "git-clean-head"
 }
