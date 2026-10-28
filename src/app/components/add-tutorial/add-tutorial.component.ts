@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Category } from '../../models/category.model';
 import { Tutorial } from '../../models/tutorial.model';
+import { CategoryService } from '../../services/category.service';
 import { TutorialService } from '../../services/tutorial.service';
 
 @Component({
@@ -7,20 +9,39 @@ import { TutorialService } from '../../services/tutorial.service';
   templateUrl: './add-tutorial.component.html',
   styleUrls: ['./add-tutorial.component.css'],
 })
-export class AddTutorialComponent {
+export class AddTutorialComponent implements OnInit {
   tutorial: Tutorial = {
     title: '',
     description: '',
-    published: false
+    published: false,
+    categoryId: null
   };
+  categories: Category[] = [];
   submitted = false;
 
-  constructor(private tutorialService: TutorialService) {}
+  constructor(
+    private tutorialService: TutorialService,
+    private categoryService: CategoryService
+  ) {}
+
+  ngOnInit(): void {
+    this.retrieveCategories();
+  }
+
+  retrieveCategories(): void {
+    this.categoryService.getAll().subscribe({
+      next: (data) => {
+        this.categories = data;
+      },
+      error: (e) => console.error(e)
+    });
+  }
 
   saveTutorial(): void {
     const data = {
       title: this.tutorial.title,
-      description: this.tutorial.description
+      description: this.tutorial.description,
+      categoryId: this.tutorial.categoryId ? this.tutorial.categoryId : null
     };
 
     this.tutorialService.create(data).subscribe({
@@ -37,7 +58,8 @@ export class AddTutorialComponent {
     this.tutorial = {
       title: '',
       description: '',
-      published: false
+      published: false,
+      categoryId: null
     };
   }
 }

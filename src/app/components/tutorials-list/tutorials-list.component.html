@@ -17,14 +17,25 @@
       placeholder="Search by title"
       [(ngModel)]="title"
     />
+    <select
+      class="form-control search-category"
+      aria-label="Filter by category"
+      [(ngModel)]="categoryId"
+      (ngModelChange)="applyCategoryFilter()"
+    >
+      <option [ngValue]="null">All categories</option>
+      @for (category of categories; track category.id) {
+      <option [ngValue]="category.id">{{ category.name }}</option>
+      }
+    </select>
     <button class="tm-btn tm-btn-primary" type="button" (click)="searchTitle()">
       Search
     </button>
   </div>
 
-  @if (tutorials && tutorials.length) {
+  @if (filteredTutorials && filteredTutorials.length) {
   <div class="card-grid">
-    @for (tutorial of tutorials; track tutorial.id; let i = $index) {
+    @for (tutorial of filteredTutorials; track tutorial.id; let i = $index) {
     <article
       class="tutorial-card tm-card"
       [class.active]="i == currentIndex"
@@ -38,6 +49,9 @@
         <span class="tm-pill tm-pill-pending">Pending</span>
         }
       </div>
+      @if (categoryName(tutorial)) {
+      <span class="tm-pill tm-pill-category">{{ categoryName(tutorial) }}</span>
+      }
       <p class="tutorial-description">{{ tutorial.description }}</p>
       <span class="tutorial-cta">View details &rarr;</span>
     </article>

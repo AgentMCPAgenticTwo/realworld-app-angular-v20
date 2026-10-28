@@ -2,6 +2,27 @@
 
 ## 2026-10-28
 
+* **Update**: Category support landed across the app (trace `4ebb30166d80`, commit
+  `a86d8471057ca0f210893c4f79a11417f67af92e`). `modules/models.md` — added the
+  `Category` concept and the `Tutorial.categoryId` foreign key;
+  `modules/services.md` — added `CategoryService` (`/categories`, `getAll`/`create`)
+  alongside `TutorialService`.
+* **Update**: `modules/components-tutorials-list.md` — new `filteredTutorials` /
+  `categories` / `categoryId` state, the `retrieveCategories`, `applyCategoryFilter`
+  and `categoryName` methods, the `select.search-category` filter and the
+  `tm-pill-category` badge; the card grid now iterates `filteredTutorials`.
+* **Update**: `modules/components-add-tutorial.md` (now `OnInit`, category `select`,
+  `categoryId` in the create payload) and
+  `modules/components-tutorial-details.md` (category `select`, `categoryName` getter,
+  `categoryId` carried through `updatePublished`; noted the drawer has not been
+  updated to match).
+* **Update**: `overview.md` (two REST base paths, category purpose),
+  `architecture.md` (data-access and model layers now list both services/models,
+  client-side-filtering boundary, refreshed hotspots), `conventions.md` (one service
+  per resource, reference-data loading, `[ngValue]` select rule, `tm-pill-category`),
+  `playbooks/common-tasks.md` (new "Work with categories" task),
+  `modules/index.md` and `index.md`.
+
 * **Creation**: Added `modules/components-header.md` for the new `HeaderComponent`
   (`src/app/components/header/`), which took over the navigation markup that used to
   live inline in `app.component.html` (trace `ceee721d6654`, commit

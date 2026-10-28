@@ -4,10 +4,10 @@ title: Project conventions
 description: Naming, file-layout, styling, template and HTTP-subscription conventions used throughout the app.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [conventions, angular, typescript, styling]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-28T11:34:18Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ a86d8471057ca0f210893c4f79a11417f67af92e
     title: Codebase knowledge graph
 status: stable
 ---
@@ -40,7 +40,8 @@ Components are **not** standalone: every new component must be added to
 
 # HTTP access
 
-* Only `TutorialService` touches `HttpClient`.
+* Only `TutorialService` and `CategoryService` touch `HttpClient`. One service per
+  REST resource, each with its own module-level `baseUrl` constant.
 * Service methods return a cold `Observable` and do nothing else — no `tap`,
   no error handling, no state.
 * Components subscribe with the object form and always supply both handlers:
@@ -55,7 +56,10 @@ Components are **not** standalone: every new component must be added to
 * Errors are logged to the console rather than surfaced, with one exception:
   `TutorialDrawerComponent.getTutorial` branches on `HttpErrorResponse.status === 404`
   and sets a `notFound` flag.
-* Request URLs stay relative (`/tutorials`); `ApiInterceptor` adds the host and
+* A component that needs reference data loads it in `ngOnInit` through a
+  `retrieveCategories()`-style method into a plain array field — there is no shared
+  cache, so every screen refetches `/categories`.
+* Request URLs stay relative (`/tutorials`, `/categories`); `ApiInterceptor` adds the host and
   `/api` prefix. Never hard-code the origin in a service.
 
 # Component state
@@ -87,7 +91,7 @@ from the `tm-*` layer.
   | `tm-section-title`, `tm-subtitle` | Heading/subheading pair at the top of a screen |
   | `tm-label`, `tm-input` | Form field label and pill-shaped input |
   | `tm-btn` + `tm-btn-primary` / `tm-btn-danger` / `tm-btn-ghost` | Pill buttons; primary is the indigo→purple gradient, danger is destructive, ghost is secondary |
-  | `tm-pill` + `tm-pill-published` / `tm-pill-pending` | Publish-status badge |
+  | `tm-pill` + `tm-pill-published` / `tm-pill-pending` / `tm-pill-category` | Publish-status badge and the neutral category badge |
   | `tm-empty`, `tm-empty-icon` | Empty-state block |
   | `tm-page` | Vertical padding on the routed `<main>` |
 
@@ -108,8 +112,14 @@ from the `tm-*` layer.
 Control flow uses the Angular 17 built-in blocks `@if` / `@else` / `@for` with a
 `track` expression — not `*ngIf` / `*ngFor`.
 
+Select dropdowns bind option values with `[ngValue]`, never `value`, so a non-string
+id survives the round trip. Every category select opens with an
+`<option [ngValue]="null">` placeholder ("No category", "All categories") before the
+`@for` over `categories`.
+
 # Types
 
-`Tutorial` fields are all optional (`title?`, `published?`, …) so components can
-initialise with `{}`. `id` is typed `any`, as are the `id`/`data` parameters on
-`TutorialService` methods.
+`Tutorial` and `Category` fields are all optional (`title?`, `published?`, `name?`, …)
+so components can initialise with `{}`. `id` is typed `any`, as are the `id`/`data`
+parameters on `TutorialService` / `CategoryService` methods and the `categoryId`
+foreign key. Component fields holding an id follow suit (`categoryId: any = null`).

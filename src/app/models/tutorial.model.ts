@@ -3,6 +3,7 @@ export class Tutorial {
   title?: string;
   description?: string;
   published?: boolean;
+  categoryId?: any;
   createdAt?: string;
   updatedAt?: string;
 }
