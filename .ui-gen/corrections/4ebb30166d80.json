@@ -1,0 +1,318 @@
+{
+  "trace_id": "4ebb30166d80",
+  "branch": "ui-correction/4ebb30166d80",
+  "maintenance_branch": "ui-correction/4ebb30166d80",
+  "status": "SUCCESS",
+  "summary": "All frontend work is done; `ng test` passes 34/35, the one failure being the pre-existing `TutorialService` spec (missing `HttpClientTestingModule`, untouched and unrelated).\n\n**Changed here (frontend):**\n- `src/app/models/category.model.ts` (new) — `Category { id, name }`.\n- `src/app/services/category.service.ts` (new) + spec — `getAll()` / `create()` against `/categories` (the `ApiInterceptor` prefixes `environment.apiUrl`), matching `TutorialService`'s conventions.\n- `src/app/models/tutorial.model.ts` — added optional `categoryId`.\n- **Add Tutorial** — loads categories on init, renders a `#category` `<select>` (\"No category\" + each category), and sends `categoryId` in the POST body.\n- **Edit Tutorial** (`tutorial-details`) — loads categories in edit mode, adds the same dropdown bound to `currentTutorial.categoryId`; `updatePublished()` now also sends `categoryId` so a publish toggle doesn't drop it.\n- **Tutorials list** — category `<select>` filter sitting in the existing search bar next to the title input, `filteredTutorials` driving the grid, and a `tm-pill tm-pill-category` badge with the category name on each card.\n- Styles: `.tm-pill-category` in `styles.css`, `.search-category` in the list CSS.\n- Tests added/updated in the list, add-tutorial and details specs for the dropdown, badge and filter.\n\n**Reading taken:** the category filter is applied client-side over the list the existing `GET /tutorials[?title=]` already returns, since the instruction only asks the backend for GET/POST `/api/categories` plus `categoryId` on tutorials and says not to extend the Tutorials contracts further.\n\n**Left for the backend repo (`realworld-dotnet`):** all of item 1 (PostgreSQL + docker-compose, connection strings, `UseNpgsql`, migration reset, startup migration, README) and the server side of item 2 (categories table, GET/POST `/api/categories`, `categoryId` on tutorials with 404 for an unknown category, and the Testcontainers integration tests).",
+  "files_changed": [
+    "src/app/components/add-tutorial/add-tutorial.component.html",
+    "src/app/components/add-tutorial/add-tutorial.component.spec.ts",
+    "src/app/components/add-tutorial/add-tutorial.component.ts",
+    "src/app/components/tutorial-details/tutorial-details.component.html",
+    "src/app/components/tutorial-details/tutorial-details.component.spec.ts",
+    "src/app/components/tutorial-details/tutorial-details.component.ts",
+    "src/app/components/tutorials-list/tutorials-list.component.css",
+    "src/app/components/tutorials-list/tutorials-list.component.html",
+    "src/app/components/tutorials-list/tutorials-list.component.spec.ts",
+    "src/app/components/tutorials-list/tutorials-list.component.ts",
+    "src/app/models/category.model.ts",
+    "src/app/models/tutorial.model.ts",
+    "src/app/services/category.service.spec.ts",
+    "src/app/services/category.service.ts",
+    "src/styles.css"
+  ],
+  "lines_changed": 345,
+  "blockers": [
+    "Not applied -- PostgreSQL: docker-compose service, connection strings, UseNpgsql, migration reset, startup migration, README commands: entirely backend work; belongs to the realworld-dotnet repository",
+    "Not applied -- Categories table, GET/POST /api/categories, categoryId on tutorials with 404 for unknown category, Testcontainers integration tests: backend side of the feature; belongs to the realworld-dotnet repository"
+  ],
+  "conventions": [],
+  "visual_check": {
+    "verdict": "pass",
+    "evidence": "The /tutorials page shows an 'All categories' dropdown filter sitting next to the title search box and Search button, and the /add page renders a 'Category' label with a select defaulting to 'No category' below Title and Description. The list has no tutorials (empty backend), so the category badge itself could not be observed, but both new UI controls are visibly present and styled consistently with the existing design.",
+    "screenshot_path": "/tmp/actual.png"
+  },
+  "context_sharing": {
+    "target": "frontend",
+    "branch": "ui-correction/4ebb30166d80",
+    "base_path": "http://localhost:5001/api",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/categories",
+        "request_fields": [],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "purpose": "List all categories for filter and select dropdowns"
+      },
+      {
+        "method": "POST",
+        "path": "/categories",
+        "request_fields": [
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "purpose": "Create a category"
+      },
+      {
+        "method": "GET",
+        "path": "/tutorials",
+        "request_fields": [],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "categoryId",
+            "type": "unknown"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "List all tutorials"
+      },
+      {
+        "method": "GET",
+        "path": "/tutorials?title={title}",
+        "request_fields": [
+          {
+            "name": "title",
+            "type": "string"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "categoryId",
+            "type": "unknown"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "Search tutorials by title substring"
+      },
+      {
+        "method": "GET",
+        "path": "/tutorials/{id}",
+        "request_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "categoryId",
+            "type": "unknown"
+          },
+          {
+            "name": "createdAt",
+            "type": "string"
+          },
+          {
+            "name": "updatedAt",
+            "type": "string"
+          }
+        ],
+        "purpose": "Fetch one tutorial for the details view"
+      },
+      {
+        "method": "POST",
+        "path": "/tutorials",
+        "request_fields": [
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "categoryId",
+            "type": "unknown"
+          }
+        ],
+        "response_fields": [],
+        "purpose": "Create a tutorial with an optional category"
+      },
+      {
+        "method": "PUT",
+        "path": "/tutorials/{id}",
+        "request_fields": [
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "published",
+            "type": "boolean"
+          },
+          {
+            "name": "categoryId",
+            "type": "unknown"
+          }
+        ],
+        "response_fields": [
+          {
+            "name": "message",
+            "type": "string"
+          }
+        ],
+        "purpose": "Update a tutorial or toggle its published status"
+      },
+      {
+        "method": "DELETE",
+        "path": "/tutorials/{id}",
+        "request_fields": [
+          {
+            "name": "id",
+            "type": "unknown"
+          }
+        ],
+        "response_fields": [],
+        "purpose": "Delete one tutorial"
+      },
+      {
+        "method": "DELETE",
+        "path": "/tutorials",
+        "request_fields": [],
+        "response_fields": [],
+        "purpose": "Delete all tutorials"
+      }
+    ],
+    "types": {
+      "Tutorial": [
+        {
+          "name": "id",
+          "type": "unknown"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "published",
+          "type": "boolean"
+        },
+        {
+          "name": "categoryId",
+          "type": "unknown"
+        },
+        {
+          "name": "createdAt",
+          "type": "string"
+        },
+        {
+          "name": "updatedAt",
+          "type": "string"
+        }
+      ],
+      "Category": [
+        {
+          "name": "id",
+          "type": "unknown"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    "notes": "Services use relative paths ('/categories', '/tutorials'); an ApiInterceptor prefixes environment.apiUrl ('http://localhost:5001/api'). All model fields are optional and id/categoryId are typed `any` in TypeScript, so the backend must keep id types consistent — the UI matches categories to tutorials with strict equality (category.id === tutorial.categoryId), so a numeric id must not be returned as a string anywhere. POST /tutorials deliberately omits `published` (server must default it), and PUT responses may include a `message` string."
+  },
+  "usage": {
+    "num_turns": 51,
+    "duration_ms": 222531,
+    "total_cost_usd": 1.2796685999999995,
+    "input_tokens": 3212,
+    "output_tokens": 15957,
+    "cache_creation_input_tokens": 67365,
+    "cache_read_input_tokens": 2081862,
+    "is_error": false
+  }
+}

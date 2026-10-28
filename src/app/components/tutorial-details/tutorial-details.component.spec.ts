@@ -49,6 +49,25 @@ describe('TutorialDetailsComponent', () => {
     );
   });
 
+  it('renders a category dropdown in edit mode', () => {
+    component.viewMode = false;
+    component.categories = [{ id: 7, name: 'Frontend' }];
+    component.currentTutorial = {
+      id: 1,
+      title: 'Angular',
+      description: 'desc',
+      published: false,
+      categoryId: 7
+    };
+    fixture.detectChanges();
+
+    const select: HTMLSelectElement =
+      fixture.nativeElement.querySelector('#category');
+    expect(select).not.toBeNull();
+    expect(select.options.length).toBe(2);
+    expect(component.categoryName).toBe('Frontend');
+  });
+
   it('shows the message as a bootstrap alert in edit mode', () => {
     component.viewMode = false;
     component.currentTutorial = {

@@ -1,6 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Category } from '../../models/category.model';
 import { Tutorial } from '../../models/tutorial.model';
+import { CategoryService } from '../../services/category.service';
 import { TutorialService } from '../../services/tutorial.service';
 
 @Component({
@@ -18,9 +20,11 @@ export class TutorialDetailsComponent implements OnInit {
   };
 
   message = '';
+  categories: Category[] = [];
 
   constructor(
     private tutorialService: TutorialService,
+    private categoryService: CategoryService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -29,7 +33,24 @@ export class TutorialDetailsComponent implements OnInit {
     if (!this.viewMode) {
       this.message = '';
       this.getTutorial(this.route.snapshot.params['id']);
+      this.retrieveCategories();
     }
+  }
+
+  retrieveCategories(): void {
+    this.categoryService.getAll().subscribe({
+      next: (data) => {
+        this.categories = data;
+      },
+      error: (e) => console.error(e)
+    });
+  }
+
+  get categoryName(): string {
+    const category = this.categories.find(
+      (c) => c.id === this.currentTutorial.categoryId
+    );
+    return category && category.name ? category.name : '';
   }
 
   getTutorial(id: string): void {
@@ -46,7 +67,10 @@ export class TutorialDetailsComponent implements OnInit {
     const data = {
       title: this.currentTutorial.title,
       description: this.currentTutorial.description,
-      published: status
+      published: status,
+      categoryId: this.currentTutorial.categoryId
+        ? this.currentTutorial.categoryId
+        : null
     };
 
     this.message = '';

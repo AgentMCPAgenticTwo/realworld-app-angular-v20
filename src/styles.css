@@ -154,6 +154,11 @@ a {
   color: #b45309;
 }
 
+.tm-pill-category {
+  background-color: #e0e7ff;
+  color: #4338ca;
+}
+
 /* Empty state */
 .tm-empty {
   text-align: center;

@@ -54,6 +54,21 @@
         />
       </div>
 
+      <div class="form-group">
+        <label class="tm-label" for="category">Category</label>
+        <select
+          class="form-control"
+          id="category"
+          [(ngModel)]="currentTutorial.categoryId"
+          name="categoryId"
+        >
+          <option [ngValue]="null">No category</option>
+          @for (category of categories; track category.id) {
+          <option [ngValue]="category.id">{{ category.name }}</option>
+          }
+        </select>
+      </div>
+
       <div class="form-group status-group">
         <span class="tm-label">Status</span>
         @if (currentTutorial.published) {

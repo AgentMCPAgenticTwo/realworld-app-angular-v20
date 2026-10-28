@@ -26,8 +26,24 @@ describe('TutorialsListComponent', () => {
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
     httpMock.expectOne('/tutorials').flush([
-      { id: 1, title: 'Angular', description: 'desc', published: false }
+      {
+        id: 1,
+        title: 'Angular',
+        description: 'desc',
+        published: false,
+        categoryId: 7
+      },
+      {
+        id: 2,
+        title: 'Vue',
+        description: 'other',
+        published: false,
+        categoryId: 8
+      }
     ]);
+    httpMock
+      .expectOne('/categories')
+      .flush([{ id: 7, name: 'Frontend' }, { id: 8, name: 'Backend' }]);
     fixture.detectChanges();
   });
 
@@ -52,8 +68,39 @@ describe('TutorialsListComponent', () => {
     );
   });
 
+  it('shows the category as a badge on each card', () => {
+    const card: HTMLElement =
+      fixture.nativeElement.querySelector('.tutorial-card');
+
+    expect(card.querySelector('.tm-pill-category')?.textContent).toContain(
+      'Frontend'
+    );
+  });
+
+  it('filters the list by the selected category', () => {
+    component.categoryId = 8;
+    component.applyCategoryFilter();
+    fixture.detectChanges();
+
+    const titles: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('.tutorial-title')
+    );
+    expect(titles.length).toBe(1);
+    expect(titles[0].textContent).toContain('Vue');
+  });
+
+  it('offers every category in the filter dropdown', () => {
+    const options: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('.search-category option')
+    );
+
+    expect(options.length).toBe(3);
+    expect(options[0].textContent).toContain('All categories');
+  });
+
   it('shows the empty state when there is no tutorial', () => {
     component.tutorials = [];
+    component.applyCategoryFilter();
     fixture.detectChanges();
 
     const empty: HTMLElement = fixture.nativeElement.querySelector('.tm-empty');
