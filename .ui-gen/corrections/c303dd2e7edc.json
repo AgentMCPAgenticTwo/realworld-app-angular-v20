@@ -1,0 +1,59 @@
+{
+  "trace_id": "c303dd2e7edc",
+  "branch": "ui-correction/c303dd2e7edc",
+  "maintenance_branch": "ui-correction/c303dd2e7edc",
+  "status": "SUCCESS",
+  "summary": "All four footer-health specs pass (136 passing). The 14 failures are pre-existing and unrelated to this change: the `Tutorial details screen` suite, and the `App shell routing` integration specs whose `httpMock.verify()` trips on the unhandled `GET /api/health` request introduced by the earlier health-check correction (that file even carries a `KNOWN-DEFECT` comment claiming health isn't implemented). I left them untouched.\n\n**Changes (all in `src/app/`, frontend only):**\n- `app.component.ts` — added an `apiLoading` flag, initialised `true` and cleared in both the `next` and `error` handlers of the existing `HealthService.get()` subscription. Status values are unchanged (`ok` / `unavailable` / `unknown`), per the recorded rule.\n- `app.component.html` — the `.app-footer-health` span now renders a spinner element while `apiLoading`, carries `aria-busy`, and binds `is-loading` / `is-ok` / `is-error`.\n- `app.component.css` — `is-ok` green, `is-error` red, plus a small `currentColor` border spinner with a reduced-motion fallback.\n- `app.component.spec.ts` — three specs: spinner + `is-loading` present during the request, spinner gone and `is-ok` after success, spinner gone and `is-error` after a 500.\n\nReading taken: the green/red styling the request calls \"existing\" was not present on this branch (it came from a sibling correction), so I implemented it here alongside the loading indicator, with \"not ok\" meaning any status other than `ok`. Nothing in this request belongs to the backend repo — `GET /api/health` is already in place and consumed unchanged.",
+  "files_changed": [
+    "src/app/app.component.css",
+    "src/app/app.component.html",
+    "src/app/app.component.spec.ts",
+    "src/app/app.component.ts"
+  ],
+  "lines_changed": 94,
+  "blockers": [],
+  "conventions": [],
+  "visual_check": {
+    "verdict": "pass",
+    "evidence": "On /tutorials (1440x900) the footer renders the health status as red bold 'API: unavailable' with no spinner, i.e. the completed-state colouring is preserved; the markup/CSS add an `is-loading` state with an animated `.app-footer-health-spinner` next to 'API: …' that is shown only while `apiLoading` is true (the transient loading frame could not be captured live because network interception was not permitted, but the app.component specs assert the spinner + is-loading class before the response and its removal with is-ok/is-error after success/failure).",
+    "screenshot_path": "/tmp/actual.png"
+  },
+  "context_sharing": {
+    "target": "frontend",
+    "branch": "ui-correction/c303dd2e7edc",
+    "base_path": "http://localhost:5001/api",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/health",
+        "request_fields": [],
+        "response_fields": [
+          {
+            "name": "status",
+            "type": "string"
+          }
+        ],
+        "purpose": "API health check rendered as \"API: {{ status }}\" in the app footer"
+      }
+    ],
+    "types": {
+      "Health": [
+        {
+          "name": "status",
+          "type": "string"
+        }
+      ]
+    },
+    "notes": "HealthService calls the relative path '/health' and ApiInterceptor prefixes it with environment.apiUrl ('http://localhost:5001/api'), so the effective URL is http://localhost:5001/api/health — not '/api/health' at the app origin. `status` is optional on the Health model; the component falls back to 'unknown' if it is missing/empty and shows 'unavailable' on any HTTP error, so the footer only reads 'API: ok' when the body is exactly {\"status\":\"ok\"}."
+  },
+  "usage": {
+    "num_turns": 25,
+    "duration_ms": 176251,
+    "total_cost_usd": 0.5722107000000001,
+    "input_tokens": 3472,
+    "output_tokens": 7220,
+    "cache_creation_input_tokens": 28437,
+    "cache_read_input_tokens": 933939,
+    "is_error": false
+  }
+}
