@@ -10,3 +10,4 @@
 * [src/app/interceptors](/modules/interceptors.md) - `ApiInterceptor`, which prefixes relative request URLs with the configured API base.
 * [src/app/models](/modules/models.md) - The `Tutorial` record shared by every component and service, plus the `Health` probe response.
 * [src/environments](/modules/environments.md) - Build-time configuration holding the API base URL.
+* [Test suite (unit, integration, e2e)](/modules/testing.md) - Karma/Jasmine unit and integration specs under src/app plus Playwright end-to-end specs under e2e.
