@@ -4,10 +4,10 @@ title: realworld-app-angular-v20
 description: Angular 17 CRUD single-page app for managing tutorials against a REST backend.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/
 tags: [angular, typescript, crud, frontend]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-29T09:53:52Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T13:16:13Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 9b034fe57d550b8f66d54b93e29362baf23c00ae
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ e44c79b17c2cab7387ac4928b2086bb0ef8c39c7
     title: Codebase knowledge graph
 status: stable
 ---
@@ -28,7 +28,7 @@ delete `Tutorial` records held by a REST backend. All UI lives in one Angular
 | Forms | `FormsModule` (template-driven, `ngModel`) |
 | Styling | Bootstrap 4.6 under a `tm-*` design system: tokens and shared classes in `src/styles.css`, screen-specific layout in per-component CSS, Inter web font from `src/index.html` |
 | Reactive | RxJS 7.8 `Observable` / `subscribe` |
-| Tests | Karma + Jasmine (`*.spec.ts`) |
+| Tests | Karma + Jasmine (`*.spec.ts`, unit + `src/app/integration/`) and Playwright 1.63 with `@axe-core/playwright` (`e2e/`) — see [Testing](/modules/testing.md) |
 
 Package name in `package.json` is `angular-17-crud`.
 
@@ -39,7 +39,8 @@ Package name in `package.json` is `angular-17-crud`.
 | `start` | `ng serve` |
 | `build` | `ng build` |
 | `watch` | `ng build --watch --configuration development` |
-| `test` | `ng test` |
+| `test` | `ng test` (Karma, every `*.spec.ts` under `src`) |
+| `test:e2e` | `playwright test` (chromium, `e2e/`, boots `npm run start`) |
 
 # Entry points
 

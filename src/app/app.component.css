@@ -31,3 +31,11 @@
   font-weight: 600;
   color: var(--tm-muted, #6b7280);
 }
+
+.app-footer-health.is-ok {
+  color: #16a34a;
+}
+
+.app-footer-health.is-error {
+  color: #dc2626;
+}

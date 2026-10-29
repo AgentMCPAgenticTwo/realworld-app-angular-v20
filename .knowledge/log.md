@@ -2,6 +2,23 @@
 
 ## 2026-10-29
 
+* **Creation**: `modules/testing.md` — new concept for the three-tier test suite added
+  by the test-generation run: the `*.component.behaviour.spec.ts` unit specs, the
+  `src/app/integration/*.integration.spec.ts` suite, the Playwright specs in `e2e/`
+  with the `stubApi` helper in `e2e/support/api-stub.ts`, the `@axe-core/playwright`
+  accessibility scan, and `playwright.config.ts` (trace `2b578480baf0`, commit
+  `e44c79b17c2cab7387ac4928b2086bb0ef8c39c7`).
+* **Update**: `overview.md` — Tests row now names both runners; added the `test:e2e`
+  script.
+* **Update**: `conventions.md` — new **Tests** section covering spec locations,
+  naming and the HTTP-boundary mocking rule.
+* **Update**: `modules/app-shell.md` — the footer now wraps the health span in
+  `.app-footer-note` and binds `is-ok` / `is-error`; added the shell's integration and
+  e2e specs to the file table.
+* **Update**: `playbooks/common-tasks.md` — **Run and test** now covers the
+  integration suite and `npm run test:e2e`.
+* **Update**: `index.md` and `modules/index.md` — list the new testing concept.
+
 * **Update**: `modules/services.md` — documented the new `HealthService`
   (`src/app/services/health.service.ts`, `GET /health`) alongside `TutorialService`;
   the services directory now holds two HTTP clients (trace `078f168c6d46`, commit

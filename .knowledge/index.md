@@ -11,6 +11,7 @@ okf_version: "0.2"
 # Modules
 
 * [Modules Index](/modules/index.md) - One concept per source directory under `src`.
+* [Test suites](/modules/testing.md) - The three-tier test suite — Karma/Jasmine unit and integration specs under `src/app`, and Playwright browser specs under `e2e/`.
 
 # Playbooks
 
