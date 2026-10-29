@@ -98,4 +98,113 @@ describe('TutorialDrawerComponent', () => {
 
     expect(closed).toHaveBeenCalled();
   });
+
+  it('unpublishes a published tutorial and shows the server message', () => {
+    openWith(1).flush({ id: 1, title: 'A', description: 'B', published: true });
+
+    component.updatePublished(false);
+    const req = httpMock.expectOne('/tutorials/1');
+    expect(req.request.body.published).toBeFalse();
+    req.flush({ message: 'Tutorial was updated successfully.' });
+
+    expect(component.currentTutorial.published).toBeFalse();
+    expect(component.message).toBe('Tutorial was updated successfully.');
+  });
+
+  it('falls back to a default message when the response has no body', () => {
+    openWith(1).flush({ id: 1, title: 'A', description: 'B', published: false });
+
+    component.updatePublished(true);
+    httpMock
+      .expectOne('/tutorials/1')
+      .flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(component.message).toBe('The status was updated successfully!');
+  });
+
+  it('leaves the published flag untouched when the update fails', () => {
+    openWith(1).flush({ id: 1, title: 'A', description: 'B', published: false });
+
+    const changed = jasmine.createSpy('changed');
+    component.changed.subscribe(changed);
+
+    component.updatePublished(true);
+    httpMock
+      .expectOne('/tutorials/1')
+      .flush('boom', { status: 500, statusText: 'Server Error' });
+
+    expect(component.currentTutorial.published).toBeFalse();
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('keeps the drawer open when the delete fails', () => {
+    openWith(1).flush({ id: 1, title: 'A', description: 'B' });
+
+    const closed = jasmine.createSpy('closed');
+    component.closed.subscribe(closed);
+
+    component.deleteTutorial();
+    httpMock
+      .expectOne('/tutorials/1')
+      .flush('boom', { status: 500, statusText: 'Server Error' });
+
+    expect(closed).not.toHaveBeenCalled();
+  });
+
+  it('does not show "Not found" for a non-404 error', () => {
+    openWith(3).flush('boom', { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(component.notFound).toBeFalse();
+    expect(fixture.nativeElement.textContent).not.toContain('Not found');
+  });
+
+  it('clears the previous tutorial and message when a different id is opened', () => {
+    openWith(1).flush({ id: 1, title: 'First', description: 'B' });
+    component.message = 'stale message';
+    fixture.detectChanges();
+
+    openWith(2).flush({ id: 2, title: 'Second', description: 'C' });
+    fixture.detectChanges();
+
+    expect(component.message).toBe('');
+    expect(component.currentTutorial.title).toBe('Second');
+    expect(fixture.nativeElement.textContent).not.toContain('First');
+  });
+
+  it('clears the not-found state and closes when the id goes back to null', () => {
+    openWith(42).flush('Not Found', { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('tutorialId', null);
+    fixture.detectChanges();
+
+    expect(component.open).toBeFalse();
+    expect(component.notFound).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.drawer')).toBeNull();
+  });
+
+  // KNOWN-DEFECT: finding "drawer body is blank for a tutorial whose id is 0".
+  // The template branches on `currentTutorial.id` truthiness, so a tutorial
+  // loaded successfully with id 0 renders an empty drawer — no title, no
+  // actions and not even the "Not found" message.
+  xit('treats id 0 as an open drawer rather than a falsy id', () => {
+    openWith(0).flush({ id: 0, title: 'Zero', description: 'B' });
+    fixture.detectChanges();
+
+    expect(component.open).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('Zero');
+  });
+
+  it('emits closed when close is called', () => {
+    openWith(1).flush({ id: 1, title: 'A', description: 'B' });
+    fixture.detectChanges();
+
+    const closed = jasmine.createSpy('closed');
+    component.closed.subscribe(closed);
+
+    component.close();
+
+    expect(closed).toHaveBeenCalled();
+  });
 });

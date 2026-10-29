@@ -1,0 +1,90 @@
+{
+  "phase": "unit",
+  "status": "SUCCESS",
+  "summary": "Extended the existing Karma/Jasmine unit suite from 26 to 87 specs (83 passing, 4 skipped as KNOWN-DEFECT, 0 failing) covering the riskiest logic: TutorialService request building, the ApiInterceptor url rewriting, and the branching/mutation/error paths of the tutorials-list, tutorial-details, tutorial-drawer and add-tutorial components. Coverage is 100% lines / 100% statements / 94.4% branches over src/app, well above the 70% target. No runner or dependency was added (karma + jasmine + karma-coverage were already present) and no application file was modified. Fixed one pre-existing broken spec (TutorialService had no HttpClient provider) and reported it as an analysis finding. Three real application defects were found and are kept as skipped red tests with KNOWN-DEFECT comments.",
+  "test_files": [
+    {
+      "file_path": "src/app/services/tutorial.service.spec.ts",
+      "type": "unit",
+      "description": "Rewrote the placeholder spec: every TutorialService method asserted on verb, url, body and emitted value, plus empty-list, 400, 404 and 500 error paths, laziness of the observable, and two skipped tests for the unencoded findByTitle query string."
+    },
+    {
+      "file_path": "src/app/interceptors/api.interceptor.spec.ts",
+      "type": "unit",
+      "description": "Added edge cases to the interceptor spec: http/HTTPS absolute urls left alone, missing and duplicate leading slash, empty url, and preservation of method/body/headers and server errors."
+    },
+    {
+      "file_path": "src/app/components/tutorials-list/tutorials-list.component.spec.ts",
+      "type": "unit",
+      "description": "Added loading/empty/error/populated states, active-card selection, search (match, no match, failure, selection reset) and removeAllTutorials (reload, state reset, no reload on failure)."
+    },
+    {
+      "file_path": "src/app/components/tutorial-details/tutorial-details.component.spec.ts",
+      "type": "unit",
+      "description": "Added the edit-mode branch (loads by route param, 404 path) and full coverage of updatePublished, updateTutorial and deleteTutorial including message fallbacks, failure paths and router navigation; one skipped test for the unguarded res.message."
+    },
+    {
+      "file_path": "src/app/components/tutorial-drawer/tutorial-drawer.component.spec.ts",
+      "type": "unit",
+      "description": "Added unpublish, empty-body message fallback, non-404 error handling, ngOnChanges reset between ids, closing back to null, failure paths for update/delete, and one skipped test for the falsy id-0 rendering bug."
+    },
+    {
+      "file_path": "src/app/components/add-tutorial/add-tutorial.component.spec.ts",
+      "type": "unit",
+      "description": "Added the submit payload shape, success/validation-error/server-error branches and the 'add another' form reset."
+    },
+    {
+      "file_path": ".test-gen/plan/unit.md",
+      "type": "unit",
+      "description": "Risk-ranked plan for this phase."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "title": "TutorialDetailsComponent throws a TypeError when an update returns an empty body",
+      "description": "updatePublished() and updateTutorial() read `res.message` with no null guard, unlike TutorialDrawerComponent which guards with `res && res.message`. A 204 / empty-body PUT response makes the subscriber throw an unhandled TypeError: the success message is never shown and the error escapes the component. Running the test unskipped also crashed the Karma browser with a disconnect, which shows the error is genuinely unhandled rather than swallowed.",
+      "file": "src/app/components/tutorial-details/tutorial-details.component.ts",
+      "test": "src/app/components/tutorial-details/tutorial-details.component.spec.ts :: TutorialDetailsComponent updatePublished falls back to the default message when the response has no body",
+      "evidence": "Flushing `null` with status 204 for PUT /tutorials/4: Expected '' to be 'The status was updated successfully!'. The browser then disconnected (\"no message in 30000 ms\"), i.e. the TypeError from `res.message` was thrown inside the RxJS next handler.",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "TutorialService.findByTitle does not encode the search term",
+      "description": "The title is interpolated straight into the query string (`/tutorials?title=${title}`). A search term containing '&' is split into extra query parameters and a term containing '#' is truncated at the fragment, so the backend receives a different search than the user typed. Using HttpParams (or encodeURIComponent) would fix it.",
+      "file": "src/app/services/tutorial.service.ts",
+      "test": "src/app/services/tutorial.service.spec.ts :: TutorialService findByTitle keeps a search term containing an ampersand intact / containing a hash intact",
+      "evidence": "Expected '/tutorials?title=cats & dogs' to be '/tutorials?title=cats%20%26%20dogs'; Expected '/tutorials?title=c#' to be '/tutorials?title=c%23'.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "Tutorial drawer renders an empty body for a tutorial whose id is 0",
+      "description": "tutorial-drawer.component.html branches on `@else if (currentTutorial.id)`, a truthiness check. The component's own `open` getter correctly uses `!== null && !== undefined`, but the template does not, so a tutorial that loads successfully with id 0 shows an open drawer with no title, no description and no action buttons — and no 'Not found' message either.",
+      "file": "src/app/components/tutorial-drawer/tutorial-drawer.component.html",
+      "test": "src/app/components/tutorial-drawer/tutorial-drawer.component.spec.ts :: TutorialDrawerComponent treats id 0 as an open drawer rather than a falsy id",
+      "evidence": "After flushing { id: 0, title: 'Zero', description: 'B' } for GET /tutorials/0: Expected 'Tutorial Details×' to contain 'Zero'.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "Pre-existing failing spec: TutorialService had no HttpClient provider",
+      "description": "Before this phase changed anything, `npm run test` reported 1 failure out of 26: the generated TutorialService spec called TestBed.configureTestingModule({}) with no HttpClientTestingModule, so injecting the service raised NullInjectorError. This is a defect in the test, not in the application; it was fixed as part of rewriting that spec.",
+      "file": "src/app/services/tutorial.service.spec.ts",
+      "test": "TutorialService should be created",
+      "evidence": "NullInjectorError: R3InjectorError(DynamicTestModule)[TutorialService -> HttpClient -> HttpClient]: No provider for HttpClient! — TOTAL: 1 FAILED, 25 SUCCESS",
+      "source": "analysis"
+    }
+  ],
+  "quarantined": [],
+  "self_reported": {
+    "passed": 83,
+    "failed": 0,
+    "skipped": 4
+  },
+  "report_path": ".test-gen/plan/unit.md",
+  "blockers": [
+    "`npm run test` is `ng test`, which defaults to the non-headless `Chrome` launcher; all runs in this session used `npx ng test --watch=false --browsers=ChromeHeadless`. package.json was deliberately left untouched (it is shared with the parallel phases and the analyze phase already ran the suite successfully), but the verification run may need those flags or CHROME_BIN set."
+  ]
+}

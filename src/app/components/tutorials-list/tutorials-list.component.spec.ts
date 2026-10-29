@@ -91,4 +91,139 @@ describe('TutorialsListComponent', () => {
     expect(component.drawerTutorialId).toBeNull();
     expect(fixture.nativeElement.querySelector('.drawer')).toBeNull();
   });
+
+  it('shows the empty state while the first request is still in flight', () => {
+    const pending = TestBed.createComponent(TutorialsListComponent);
+    pending.detectChanges();
+
+    expect(pending.componentInstance.tutorials).toBeUndefined();
+    expect(pending.nativeElement.querySelector('.tm-empty')).not.toBeNull();
+
+    httpMock.expectOne('/tutorials').flush([]);
+  });
+
+  it('keeps the previously loaded list when reloading fails', () => {
+    component.retrieveTutorials();
+    httpMock
+      .expectOne('/tutorials')
+      .flush('boom', { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(component.tutorials).toEqual([
+      { id: 1, title: 'Angular', description: 'desc', published: false }
+    ]);
+    expect(fixture.nativeElement.querySelector('.tutorial-card')).not.toBeNull();
+  });
+
+  it('marks the clicked tutorial as the active card', () => {
+    const card: HTMLElement =
+      fixture.nativeElement.querySelector('.tutorial-card');
+    card.click();
+    fixture.detectChanges();
+    httpMock.expectOne('/tutorials/1').flush({ id: 1, title: 'Angular' });
+    fixture.detectChanges();
+
+    expect(component.currentIndex).toBe(0);
+    expect(component.currentTutorial.id).toBe(1);
+    expect(
+      fixture.nativeElement.querySelector('.tutorial-card').classList
+    ).toContain('active');
+  });
+
+  describe('search', () => {
+    it('searches by the typed title and replaces the list with the results', () => {
+      component.title = 'Rx';
+
+      fixture.nativeElement.querySelector('.search-bar .tm-btn').click();
+
+      const req = httpMock.expectOne((r) => r.url.startsWith('/tutorials'));
+      expect(req.request.urlWithParams).toContain('title=Rx');
+      req.flush([{ id: 9, title: 'Rx', description: 'streams', published: true }]);
+      fixture.detectChanges();
+
+      expect(component.tutorials?.length).toBe(1);
+      expect(
+        fixture.nativeElement.querySelector('.tutorial-title').textContent
+      ).toContain('Rx');
+    });
+
+    it('shows the empty state when the search matches nothing', () => {
+      component.title = 'nothing';
+      component.searchTitle();
+      httpMock.expectOne((r) => r.url.startsWith('/tutorials')).flush([]);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.tm-empty')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.tutorial-card')).toBeNull();
+    });
+
+    it('clears the selection and closes the drawer before searching', () => {
+      component.setActiveTutorial({ id: 1 }, 0);
+      fixture.detectChanges();
+      httpMock.expectOne('/tutorials/1').flush({ id: 1, title: 'Angular' });
+
+      component.searchTitle();
+      fixture.detectChanges();
+
+      expect(component.drawerTutorialId).toBeNull();
+      expect(component.currentIndex).toBe(-1);
+      expect(component.currentTutorial).toEqual({});
+      expect(fixture.nativeElement.querySelector('.drawer')).toBeNull();
+
+      httpMock.expectOne((r) => r.url.startsWith('/tutorials')).flush([]);
+    });
+
+    it('keeps the current list when the search request fails', () => {
+      component.searchTitle();
+      httpMock
+        .expectOne((r) => r.url.startsWith('/tutorials'))
+        .flush('boom', { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      expect(component.tutorials?.length).toBe(1);
+    });
+  });
+
+  describe('removeAllTutorials', () => {
+    it('deletes the whole collection and reloads an empty list', () => {
+      fixture.nativeElement.querySelector('.list-header .tm-btn').click();
+
+      const del = httpMock.expectOne('/tutorials');
+      expect(del.request.method).toBe('DELETE');
+      del.flush({ message: 'All tutorials were deleted.' });
+
+      const reload = httpMock.expectOne('/tutorials');
+      expect(reload.request.method).toBe('GET');
+      reload.flush([]);
+      fixture.detectChanges();
+
+      expect(component.tutorials).toEqual([]);
+      expect(fixture.nativeElement.querySelector('.tm-empty')).not.toBeNull();
+    });
+
+    it('resets the selection and closes the drawer after deleting everything', () => {
+      component.setActiveTutorial({ id: 1 }, 0);
+      fixture.detectChanges();
+      httpMock.expectOne('/tutorials/1').flush({ id: 1, title: 'Angular' });
+
+      component.removeAllTutorials();
+      httpMock.expectOne((r) => r.method === 'DELETE').flush({});
+      httpMock.expectOne((r) => r.method === 'GET').flush([]);
+      fixture.detectChanges();
+
+      expect(component.drawerTutorialId).toBeNull();
+      expect(component.currentIndex).toBe(-1);
+      expect(component.currentTutorial).toEqual({});
+    });
+
+    it('does not reload the list when the delete request fails', () => {
+      component.removeAllTutorials();
+      httpMock
+        .expectOne((r) => r.method === 'DELETE')
+        .flush('boom', { status: 500, statusText: 'Server Error' });
+
+      httpMock.expectNone((r) => r.method === 'GET');
+      expect(component.tutorials?.length).toBe(1);
+    });
+  });
 });
