@@ -1,0 +1,40 @@
+{
+  "job_id": "9bec4a495bdb",
+  "base_branch": "main",
+  "test_types": [
+    "unit",
+    "integration",
+    "e2e"
+  ],
+  "coverage_target": 70,
+  "profile": {
+    "kind": "frontend",
+    "stack": "node",
+    "language": "typescript",
+    "workdir": ".",
+    "package_manager": "npm",
+    "frameworks": [
+      "angular",
+      "typescript"
+    ],
+    "unit_runner": "karma",
+    "e2e_runner": "none",
+    "existing_test_files": 9,
+    "services": [],
+    "dev_port": 4200,
+    "commands": {
+      "install": "if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi",
+      "unit": "npm run test",
+      "e2e": "npx playwright test",
+      "dev_server": "npm run start",
+      "build": "npm run build"
+    },
+    "notes": []
+  },
+  "live_phases": [
+    "e2e"
+  ],
+  "mcp_phases": [
+    "e2e"
+  ]
+}

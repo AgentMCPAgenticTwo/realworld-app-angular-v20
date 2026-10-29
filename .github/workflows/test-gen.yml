@@ -1,0 +1,445 @@
+name: test-gen
+
+# test-gen-workflow-version: 3
+
+on:
+  push:
+    branches:
+      - 'test-gen/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # One job per test type, all at once: the run takes as long as its slowest phase.
+  phase:
+    name: phase ${{ matrix.phase }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { phase: unit, slot: 0, minutes: 25 }
+          - { phase: integration, slot: 1, minutes: 25 }
+          - { phase: e2e, slot: 2, minutes: 30 }
+    env:
+      CI: 'true'
+      PHASE: ${{ matrix.phase }}
+      SLOT: ${{ matrix.slot }}
+      PHASE_TIMEOUT_MIN: ${{ matrix.minutes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install project dependencies
+        working-directory: .
+        run: |
+          if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi
+
+      - name: Install the Playwright browser
+        if: matrix.phase == 'e2e'
+        working-directory: .
+        run: |
+          if [ -d node_modules/@playwright/test ]; then npx playwright install --with-deps chromium; else npx -y playwright@1.63.0 install --with-deps chromium; fi
+
+      - name: Run the testing agent for this phase
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKENS_JSON: ${{ secrets.CLAUDE_CODE_OAUTH_TOKENS_JSON }}
+          CLAUDE_CODE_OAUTH_TOKEN_LABELS_JSON: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_LABELS_JSON }}
+          CLAUDE_CODE_EFFORT_LEVEL: "low"
+          IS_MODEL_RAIL: ${{ secrets.IS_MODEL_RAIL }}
+          MODEL_RAIL_URL: ${{ secrets.MODEL_RAIL_URL }}
+          MODEL_RAIL_ORG_ID: ${{ secrets.MODEL_RAIL_ORG_ID }}
+          MODEL_RAIL_PROJECT_ID: ${{ secrets.MODEL_RAIL_PROJECT_ID }}
+          MODEL_RAIL_TEAM_ID: ${{ secrets.MODEL_RAIL_TEAM_ID }}
+          MODEL_RAIL_POLICY_KEY: ${{ secrets.MODEL_RAIL_POLICY_KEY }}
+          MODEL_RAIL_PURPOSE: ${{ secrets.MODEL_RAIL_PURPOSE }}
+          MODEL_RAIL_INTERNAL_KEY: ${{ secrets.MODEL_RAIL_INTERNAL_KEY }}
+          LITELLM_DIRECT_URL: ${{ secrets.LITELLM_DIRECT_URL }}
+          LITELLM_DIRECT_API_KEY: ${{ secrets.LITELLM_DIRECT_API_KEY }}
+        run: |
+          set -uo pipefail
+          # ── auth: identical rules to ui-dev-agent's ui-gen.yml ──────────────────────
+          OAUTH_ROTATE=false
+          TOKENS=()
+          TOKEN_LABELS=()
+          token_idx=0
+          if [ -n "${LITELLM_DIRECT_URL:-}" ]; then
+            # TEST-ONLY: straight to LiteLLM, no Model Rail policy/budget/audit.
+            unset CLAUDE_CODE_OAUTH_TOKEN
+            export ANTHROPIC_BASE_URL="$LITELLM_DIRECT_URL"
+            export ANTHROPIC_AUTH_TOKEN="${LITELLM_DIRECT_API_KEY:-litellm}"
+            export ANTHROPIC_API_KEY=""
+            echo "TEST MODE: routing claude directly to LiteLLM ($LITELLM_DIRECT_URL), bypassing Model Rail"
+          elif [ "${IS_MODEL_RAIL:-false}" = "true" ]; then
+            unset CLAUDE_CODE_OAUTH_TOKEN
+            # This run's real rail scope/policy (gitops._write_rail_scope), preferred over
+            # the static repo secrets. Holds no credentials.
+            if [ -f .test-gen/rail-scope.env ]; then
+              set -a; . .test-gen/rail-scope.env; set +a
+            fi
+            export ANTHROPIC_BASE_URL="$MODEL_RAIL_URL/llm"
+            export ANTHROPIC_AUTH_TOKEN="${MODEL_RAIL_INTERNAL_KEY:-model-rail}"
+            export ANTHROPIC_API_KEY=""
+            export ANTHROPIC_CUSTOM_HEADERS="$(printf 'X-Rail-Run-Id: %s\nX-Rail-Repo: %s\nX-Rail-Agent: testing-agent\nX-Rail-Stage: test-gen\nX-Rail-Org-Id: %s\nX-Rail-Project-Id: %s\nX-Rail-Team-Id: %s\nX-Rail-Policy-Key: %s\nX-Rail-Purpose: %s' "$GITHUB_RUN_ID" "$GITHUB_REPOSITORY" "${MODEL_RAIL_ORG_ID:-}" "${MODEL_RAIL_PROJECT_ID:-}" "${MODEL_RAIL_TEAM_ID:-}" "${MODEL_RAIL_POLICY_KEY:-}" "${MODEL_RAIL_PURPOSE:-}")"
+            echo "routing claude through Model Rail ($MODEL_RAIL_URL, policy=${MODEL_RAIL_POLICY_KEY:-<static>}, purpose=${MODEL_RAIL_PURPOSE:-<none>})"
+          else
+            OAUTH_ROTATE=true
+            if [ -n "${CLAUDE_CODE_OAUTH_TOKENS_JSON:-}" ]; then
+              mapfile -t TOKENS < <(printf '%s' "$CLAUDE_CODE_OAUTH_TOKENS_JSON" | jq -r '.[]')
+            else
+              TOKENS=("${CLAUDE_CODE_OAUTH_TOKEN:-}")
+            fi
+            if [ -n "${CLAUDE_CODE_OAUTH_TOKEN_LABELS_JSON:-}" ]; then
+              mapfile -t TOKEN_LABELS < <(printf '%s' "$CLAUDE_CODE_OAUTH_TOKEN_LABELS_JSON" | jq -r '.[]')
+            fi
+            if [ "${#TOKENS[@]}" -eq 0 ]; then
+              echo "::warning::CLAUDE_CODE_OAUTH_TOKENS_JSON parsed to no tokens - using the single CLAUDE_CODE_OAUTH_TOKEN secret"
+              TOKENS=("${CLAUDE_CODE_OAUTH_TOKEN:-}")
+            fi
+          fi
+          token_label() {
+            local i="$1" l=""
+            if [ "$i" -lt "${#TOKEN_LABELS[@]}" ]; then l="${TOKEN_LABELS[$i]}"; fi
+            if [ -n "$l" ]; then printf '%s' "$l"; else printf 'token #%d/%d' "$((i + 1))" "${#TOKENS[@]}"; fi
+          }
+          pool_names() {
+            local i out=""
+            for i in "${!TOKENS[@]}"; do out="${out:+$out, }$(token_label "$i")"; done
+            printf '%s' "$out"
+          }
+          if [ "$OAUTH_ROTATE" = "true" ]; then
+            echo "claude authenticating with the run's Claude Code OAuth pool (${#TOKENS[@]}): $(pool_names)"
+          fi
+
+          # Parallel phases start on different tokens of the pool, so they do not all
+          # drain the same one first; the rotation below is unchanged.
+          if [ "$OAUTH_ROTATE" = "true" ] && [ "${#TOKENS[@]}" -gt 0 ]; then
+            token_idx=$(( SLOT % ${#TOKENS[@]} ))
+          fi
+
+          # ── the app under test, for phases that drive it live ───────────────────────
+          WORKDIR="$(jq -r '.profile.workdir // "."' .test-gen/run.json)"
+          DEV_CMD="$(jq -r '.profile.commands.dev_server // ""' .test-gen/run.json)"
+          DEV_PORT="$(jq -r '.profile.dev_port // empty' .test-gen/run.json)"
+          LIVE_PHASES="$(jq -r '.live_phases | join(" ")' .test-gen/run.json)"
+          MCP_PHASES="$(jq -r '.mcp_phases | join(" ")' .test-gen/run.json)"
+          export APP_PORT="${DEV_PORT:-3000}"
+          export APP_URL="http://localhost:${APP_PORT}"
+          APP_PID=""
+          start_app() {
+            [ -n "$DEV_CMD" ] || { echo "no dev server command detected - $1 runs without a live app"; return 0; }
+            # setsid: its own process group, so stop_app takes down the whole npm/node tree.
+            setsid nohup bash -c "cd '$WORKDIR' && PORT=$APP_PORT $DEV_CMD" > ".test-gen/transcripts/app-server-$1.log" 2>&1 &
+            APP_PID=$!
+            for _ in $(seq 1 60); do
+              if curl -s -o /dev/null "$APP_URL"; then echo "app is up at $APP_URL"; return 0; fi
+              sleep 2
+            done
+            echo "::warning::the app did not answer at $APP_URL within 120s (see app-server-$1.log in testing-transcripts)"
+          }
+          stop_app() {
+            if [ -n "$APP_PID" ]; then kill -- -"$APP_PID" 2>/dev/null || kill "$APP_PID" 2>/dev/null || true; fi
+            APP_PID=""
+          }
+          in_list() { case " $2 " in *" $1 "*) return 0;; *) return 1;; esac; }
+
+          mkdir -p .test-gen/outputs .test-gen/transcripts .test-gen/usage .test-gen/rotations .test-gen/qa .test-gen/plan
+          for task in .test-gen/tasks/*-"$PHASE"/; do
+            [ -d "$task" ] || continue
+            id="$(basename "$task")"
+            phase="$PHASE"
+            echo "── $id: Claude is planning, writing and running tests (stopped after ${PHASE_TIMEOUT_MIN} min) ──"
+            tools="Read,Write,Edit,Glob,Grep,TodoWrite,Bash(ls:*),Bash(mkdir:*),Bash(cat:*),Bash(curl:*),Bash(kill:*),Bash(sleep:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(corepack:*)"
+            mcp_args=()
+            if in_list "$phase" "$MCP_PHASES"; then
+              tools="$tools,mcp__playwright"
+              mcp_args=(--mcp-config .mcp.json)
+            fi
+            if in_list "$phase" "$LIVE_PHASES"; then start_app "$phase"; fi
+            prompt="Read ${task}TASK.md and follow it exactly. The 'Testing agent' block in the repo-root CLAUDE.md is authoritative on HOW to test (above all: never modify application code); TASK.md governs WHAT to do in this phase. Load .claude/skills/testing/SKILL.md for stack recipes. Write your result to .test-gen/outputs/${id}.json following .test-gen/OUTPUT_SCHEMA.json. Work autonomously until done."
+            session_id=""
+            rotations_json='[]'
+            tries=0
+            transient_used=false
+            pool_exhausted=false
+            timed_out=false
+            phase_start=$(date +%s)
+            while :; do
+              if [ "$OAUTH_ROTATE" = "true" ]; then
+                export CLAUDE_CODE_OAUTH_TOKEN="${TOKENS[$token_idx]}"
+              fi
+              if [ -n "$session_id" ]; then
+                run_prompt="Continue exactly where you left off and finish this phase. Write your result to .test-gen/outputs/${id}.json following .test-gen/OUTPUT_SCHEMA.json."
+                resume_args=(--resume "$session_id")
+              else
+                run_prompt="$prompt"
+                resume_args=()
+              fi
+              # The cap covers the whole phase, resumes after a token rotation included.
+              remaining=$(( PHASE_TIMEOUT_MIN * 60 - ($(date +%s) - phase_start) ))
+              if [ "$remaining" -le 30 ]; then timed_out=true; status=124; break; fi
+              # stream-json: every tool call shows up in this log as it happens
+              # (.test-gen/progress.jq); the raw stream is kept as the transcript.
+              printf '%s' "$run_prompt" | timeout --signal=INT --kill-after=60 "${remaining}s" claude \
+                --print "${resume_args[@]}" \
+                --model "claude-opus-5" \
+                --permission-mode acceptEdits \
+                --allowedTools "$tools" \
+                "${mcp_args[@]}" \
+                --add-dir "$task" \
+                --output-format stream-json --verbose \
+                2> "/tmp/$id.stderr.log" \
+                | tee -a ".test-gen/transcripts/$id.jsonl" \
+                | jq --unbuffered -r -f .test-gen/progress.jq 2>/dev/null
+              pipe=("${PIPESTATUS[@]}")
+              status="${pipe[1]}"
+              jq -c 'select(.type == "result")' ".test-gen/transcripts/$id.jsonl" 2>/dev/null \
+                | tail -n 1 > ".test-gen/usage/$id.json"
+              session_id="$(jq -r 'select(.session_id != null) | .session_id' ".test-gen/transcripts/$id.jsonl" 2>/dev/null | tail -n 1)"
+              { jq -r '.result // empty' ".test-gen/usage/$id.json" 2>/dev/null || true; \
+                cat "/tmp/$id.stderr.log"; } > ".test-gen/transcripts/$id.log"
+              if [ "$status" = "124" ] || [ "$status" = "137" ]; then timed_out=true; break; fi
+              is_limit=false
+              RESULT_MSG=""
+              if [ "$status" -ne 0 ] && [ "$OAUTH_ROTATE" = "true" ]; then
+                RESULT_MSG="$(jq -r 'select(.is_error == true) | .result // empty' ".test-gen/usage/$id.json" 2>/dev/null || true)"
+                api_status="$(jq -r '.api_error_status // empty' ".test-gen/usage/$id.json" 2>/dev/null || true)"
+                if printf '%s' "$RESULT_MSG" \
+                     | grep -qiE 'hit your .*limit|usage limit|session limit|weekly limit|opus limit|sonnet limit|5-hour limit|limit reached|out of extra usage'; then
+                  is_limit=true
+                elif [ "$api_status" = "429" ]; then
+                  if [ "$transient_used" = "false" ]; then
+                    transient_used=true
+                    echo "::warning::$id got a transient 429 on $(token_label "$token_idx") - retrying the same token in ${CLAUDE_TRANSIENT_BACKOFF_S:-30}s"
+                    sleep "${CLAUDE_TRANSIENT_BACKOFF_S:-30}"
+                    continue
+                  fi
+                  is_limit=true
+                fi
+              fi
+              if [ "$is_limit" = "true" ]; then
+                if [ "$((tries + 1))" -lt "${#TOKENS[@]}" ]; then
+                  from_idx=$token_idx
+                  from_label="$(token_label "$from_idx")"
+                  token_idx=$(( (token_idx + 1) % ${#TOKENS[@]} ))
+                  to_label="$(token_label "$token_idx")"
+                  tries=$((tries + 1))
+                  transient_used=false
+                  rotations_json="$(printf '%s' "$rotations_json" | jq -c \
+                    --argjson from "$from_idx" --argjson to "$token_idx" \
+                    --arg from_label "$from_label" --arg to_label "$to_label" \
+                    --arg session "${session_id:-}" --arg msg "${RESULT_MSG:0:300}" \
+                    '. + [{from_token_idx: $from, to_token_idx: $to, from_label: $from_label, to_label: $to_label, session_id: $session, limit_message: $msg}]')"
+                  echo "::warning::$from_label hit a usage limit on $id, rotating to $to_label, resuming session ${session_id:-<none>}"
+                  continue
+                fi
+                pool_exhausted=true
+              fi
+              break
+            done
+            stop_app
+            if [ "$rotations_json" != "[]" ]; then
+              printf '%s' "$rotations_json" > ".test-gen/rotations/$id.json"
+            fi
+            out=".test-gen/outputs/$id.json"
+            if [ "$timed_out" = "true" ]; then
+              # Out of time is a result, not a failure: the tests written so far stand.
+              msg="stopped after ${PHASE_TIMEOUT_MIN} min (the phase time cap); the tests written so far are kept"
+              echo "::warning::$id $msg"
+              if [ -s "$out" ] && jq -e . "$out" >/dev/null 2>&1; then
+                jq --arg m "$msg" '.status = (if .status == "SUCCESS" then "PARTIAL" else .status end) | .blockers = ((.blockers // []) + [$m])' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
+              else
+                jq -n --arg phase "$phase" --arg m "$msg" \
+                  '{phase: $phase, status: "PARTIAL", summary: $m, test_files: [], findings: [], quarantined: [], self_reported: {passed: 0, failed: 0, skipped: 0}, report_path: "", blockers: [$m]}' \
+                  > "$out"
+              fi
+              continue
+            fi
+            RESULT_MSG="$(jq -r '.result // empty' ".test-gen/usage/$id.json" 2>/dev/null || true)"
+            if [ "$status" -ne 0 ]; then
+              echo "--- claude error for $id ---"
+              if [ -n "$RESULT_MSG" ]; then printf '%s\n' "$RESULT_MSG";
+              elif [ -s "/tmp/$id.stderr.log" ]; then cat "/tmp/$id.stderr.log";
+              else echo "(claude produced no output at all -- likely killed by the job timeout)"; fi
+              echo "-----------------------------"
+            fi
+            if [ "$status" -ne 0 ]; then
+              pool_note=""
+              if [ "$pool_exhausted" = "true" ] && [ "${#TOKENS[@]}" -gt 1 ]; then
+                pool_note=" (every token in the OAuth pool hit a usage limit: $(pool_names))"
+              fi
+              # QA is additive: a QA session that dies must not cost the run the tests the
+              # other phases wrote. Record it as SKIPPED and move on.
+              if [ "$phase" = "qa" ]; then
+                echo "::warning::QA phase failed ($status)$pool_note - recorded as SKIPPED, the test results stand"
+                jq -n --arg msg "QA phase did not complete: claude exited $status$pool_note. ${RESULT_MSG:0:300}" \
+                  '{phase: "qa", status: "SKIPPED", summary: $msg, test_files: [], findings: [], quarantined: [], self_reported: {passed: 0, failed: 0, skipped: 0}, report_path: "", blockers: [$msg]}' \
+                  > "$out"
+                continue
+              fi
+              echo "::error::claude exited $status for $id$pool_note: ${RESULT_MSG:0:400}"
+              exit "$status"
+            fi
+            if [ "$phase" = "qa" ] && [ ! -s "$out" ]; then
+              jq -n '{phase: "qa", status: "SKIPPED", summary: "QA phase wrote no output", test_files: [], findings: [], quarantined: [], self_reported: {passed: 0, failed: 0, skipped: 0}, report_path: "", blockers: ["QA phase wrote no output"]}' \
+                > "$out"
+            fi
+          done
+
+      - name: Put back any application file the agent changed
+        if: always()
+        run: python3 .test-gen/guard.py
+
+      - name: Hand this phase's work to the collect job
+        if: always()
+        run: python3 .test-gen/collect.py pack "$PHASE" "$RUNNER_TEMP/phase-out"
+
+      - name: Upload this phase's work
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-${{ matrix.phase }}
+          path: ${{ runner.temp }}/phase-out/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 3
+
+  # Brings the phases together, then measures them independently of what any agent said.
+  collect:
+    name: collect
+    needs: phase
+    # Failed phases still hand over their work; a cancelled run does not commit anything.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download every phase's work
+        uses: actions/download-artifact@v4
+        with:
+          pattern: phase-*
+          path: ${{ runner.temp }}/phases
+
+      - name: Merge the phases
+        run: python3 .test-gen/collect.py merge "$RUNNER_TEMP/phases"
+
+      - name: Install project dependencies
+        working-directory: .
+        run: |
+          if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi
+
+      - name: Install the Playwright browser
+        working-directory: .
+        run: |
+          if [ -d node_modules/@playwright/test ]; then npx playwright install --with-deps chromium; else npx -y playwright@1.63.0 install --with-deps chromium; fi
+
+      - name: Put back any application file the agent changed
+        run: python3 .test-gen/guard.py
+
+      - name: Verify the tests independently
+        working-directory: .
+        run: python3 .test-gen/verify.py
+
+      - name: Validate outputs against OUTPUT_SCHEMA.json
+        run: |
+          python3 - <<'PY'
+          import json, sys, pathlib
+          out = pathlib.Path('.test-gen/outputs')
+          files = sorted(out.glob('*.json')) if out.exists() else []
+          if not files:
+              print('::error::agent produced no outputs'); sys.exit(1)
+          bad = 0
+          for f in files:
+              raw = f.read_text()
+              try:
+                  d = json.loads(raw, strict=False)
+              except Exception as e:
+                  print(f'::error::{f.name} is not valid JSON: {e}'); bad += 1; continue
+              missing = [k for k in ('phase', 'status', 'summary', 'blockers') if k not in d]
+              for k in missing:
+                  print(f'::error::{f.name} missing required key {k!r}'); bad += 1
+              if not missing:
+                  canonical = json.dumps(d, indent=2, ensure_ascii=False) + chr(10)
+                  if canonical != raw:
+                      f.write_text(canonical)
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Commit tests and reports
+        run: |
+          # Generated reports, QA screenshots and raw stream transcripts travel as artifacts,
+          # never as commits -- the PR carries tests, outputs, TEST_PLAN.md and QA_REPORT.md.
+          printf '%s\n' coverage/ playwright-report/ test-results/ blob-report/ htmlcov/ \
+            .nyc_output/ .test-gen/verify/raw/ .test-gen/qa/ TestResults/ \
+            '.test-gen/transcripts/*.jsonl' >> .git/info/exclude
+          git config user.name  "test-gen[bot]"
+          git config user.email "test-gen@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "test(test-gen): generated tests for ${GITHUB_REF_NAME}"
+            git push origin HEAD:"${GITHUB_REF_NAME}"
+          fi
+
+      - name: Upload agent transcripts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testing-transcripts
+          path: .test-gen/transcripts/
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            .test-gen/verify/
+            .test-gen/qa/
+            .test-gen/QA_REPORT.md
+            .test-gen/TEST_PLAN.md
+            .test-gen/guard.json
+            .test-gen/merge.json
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+      - name: Open draft PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh pr view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "PR already open"
+          else
+            gh pr create \
+              --draft \
+              --base "main" \
+              --head "${GITHUB_REF_NAME}" \
+              --title "test(test-gen): automated tests for main (${GITHUB_REF_NAME})" \
+              --body "Generated by testing-agent (job ${GITHUB_REF_NAME##*/}). Per-phase results in .test-gen/outputs/, verified results in the test-reports artifact." \
+              || echo "gh pr create failed - continuing"
+          fi
