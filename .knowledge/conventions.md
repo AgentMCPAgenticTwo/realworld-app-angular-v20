@@ -4,10 +4,10 @@ title: Project conventions
 description: Naming, file-layout, styling, template and HTTP-subscription conventions used throughout the app.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [conventions, angular, typescript, styling]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T14:16:12Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 19da638a38938f3e8b1b478977983659baa67ea2
     title: Codebase knowledge graph
 status: stable
 ---
@@ -18,6 +18,10 @@ status: stable
   `<kebab-name>.component.ts`, `.html`, `.css` and `.spec.ts`.
 * Services in `src/app/services/`, models in `src/app/models/`, HTTP interceptors in
   `src/app/interceptors/`. Each has a sibling `.spec.ts`.
+* Tests follow their layer: unit specs sit beside the code (`*.spec.ts`, and
+  `*.component.behaviour.spec.ts` for component behaviour), integration specs in
+  `src/app/integration/*.integration.spec.ts`, Playwright specs in `e2e/*.spec.ts` with
+  shared stubs in `e2e/support/`. See [Test suite](/modules/testing.md).
 * `@Component` always uses `templateUrl` plus an external stylesheet — never inline
   templates. Most components use the singular Angular 17 `styleUrl`
   (`src/app/app.component.ts`); `HeaderComponent` uses the array form `styleUrls`.
@@ -106,7 +110,19 @@ from the `tm-*` layer.
 # Templates
 
 Control flow uses the Angular 17 built-in blocks `@if` / `@else` / `@for` with a
-`track` expression — not `*ngIf` / `*ngFor`.
+`track` expression — not `*ngIf` / `*ngFor`. The lone exception is the footer health
+spinner in `src/app/app.component.html`, which still uses `*ngIf`
+([app-shell](/modules/app-shell.md)).
+
+# Testing
+
+* Unit and integration specs never hit the network: they use
+  `HttpClientTestingModule` + `HttpTestingController` and assert URLs against
+  `environment.apiUrl`.
+* Integration specs use the real `AppRoutingModule` and the real `ApiInterceptor`
+  (registered via `HTTP_INTERCEPTORS`) rather than mocking in-repo collaborators.
+* Playwright specs stub the backend with `page.route` through the shared helper
+  `e2e/support/api-stub.ts` — never a live `http://localhost:5001` backend.
 
 # Types
 

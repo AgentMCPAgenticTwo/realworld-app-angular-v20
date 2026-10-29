@@ -9,6 +9,7 @@ import { HealthService } from './services/health.service';
 export class AppComponent implements OnInit {
   title = 'Angular 17 Crud example';
   apiStatus = 'unknown';
+  apiLoading = true;
 
   constructor(private healthService: HealthService) {}
 
@@ -16,9 +17,11 @@ export class AppComponent implements OnInit {
     this.healthService.get().subscribe({
       next: (health) => {
         this.apiStatus = health.status || 'unknown';
+        this.apiLoading = false;
       },
       error: () => {
         this.apiStatus = 'unavailable';
+        this.apiLoading = false;
       },
     });
   }

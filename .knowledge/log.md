@@ -2,6 +2,20 @@
 
 ## 2026-10-29
 
+* **Creation**: `modules/testing.md` — new concept covering the three test layers added
+  in this trace: Karma/Jasmine unit specs (`*.component.behaviour.spec.ts`), integration
+  specs in `src/app/integration/`, and Playwright e2e specs in `e2e/` with the shared
+  `e2e/support/api-stub.ts` stubs and `playwright.config.ts` (trace `f7febe8bae7e`,
+  commit `19da638a38938f3e8b1b478977983659baa67ea2`).
+* **Update**: `modules/app-shell.md` — `AppComponent` now also exposes `apiLoading`; the
+  footer renders `API: checking…` while the probe is in flight and binds
+  `is-loading` / `is-ok` / `is-error` on `.app-footer-health`.
+* **Update**: `conventions.md` — added a **Testing** section and the test file-layout
+  rule; noted the `*ngIf` spinner as the one exception to the `@if` block rule.
+* **Update**: `overview.md` — added the `test:e2e` script, `playwright.config.ts` as an
+  entry point, and the Playwright/axe test stack.
+* **Update**: `modules/index.md` — listed the new test-suite concept.
+
 * **Update**: `modules/services.md` — documented the new `HealthService`
   (`src/app/services/health.service.ts`, `GET /health`) alongside `TutorialService`;
   the services directory now holds two HTTP clients (trace `078f168c6d46`, commit

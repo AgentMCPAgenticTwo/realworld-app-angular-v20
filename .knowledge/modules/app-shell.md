@@ -4,10 +4,10 @@ title: src/app (shell)
 description: Root module, root component and route table that bootstrap the application and surface API health in the footer.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [angular, bootstrap, routing, health]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-29T09:53:52Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T14:16:12Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 9b034fe57d550b8f66d54b93e29362baf23c00ae
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 19da638a38938f3e8b1b478977983659baa67ea2
     title: Codebase knowledge graph
 status: stable
 ---
@@ -20,12 +20,13 @@ status: stable
 | `src/index.html` | - | - | Host page; mounts `<app-root>` and preloads the Inter web font |
 | `src/styles.css` | - | - | Global theme tokens and the shared `tm-*` utility classes |
 | `src/app/app.module.ts` | `AppModule` | 35 | Declarations, imports, providers, bootstrap |
-| `src/app/app.component.ts` | `AppComponent` | 9 | Layout shell, `title` / `apiStatus` fields, `ngOnInit` health probe |
+| `src/app/app.component.ts` | `AppComponent` | 9 | Layout shell, `title` / `apiStatus` / `apiLoading` fields, `ngOnInit` health probe |
 | `src/app/app.component.html` | - | - | `.app-shell` wrapper: `<app-header>`, `<main class="container tm-page">` with `<router-outlet>`, and `.app-footer` with the `.app-footer-health` status |
-| `src/app/app.component.css` | - | - | Sticky-footer flex layout (`.app-shell`, `.app-footer`, `.app-footer-health`) |
+| `src/app/app.component.css` | - | - | Sticky-footer flex layout (`.app-shell`, `.app-footer`, `.app-footer-health`) plus the spinner keyframes |
 | `src/app/app-routing.module.ts` | `routes` | 7 | Route table |
 | `src/app/app-routing.module.ts` | `AppRoutingModule` | 18 | `RouterModule.forRoot(routes)` |
 | `src/app/app.component.spec.ts` | - | - | Karma spec; asserts `title`, that the header and footer render, and the footer health text |
+| `src/app/integration/app-shell.integration.spec.ts` | - | - | Integration spec: real `AppRoutingModule` + `ApiInterceptor`, navigation between routes and the footer health states |
 
 `AppComponent` no longer carries navigation markup — that moved to
 [HeaderComponent](/modules/components-header.md). The `title` field is still present
@@ -33,21 +34,34 @@ and asserted by the spec, but is not rendered anywhere.
 
 # API health indicator
 
-`ngOnInit` (line 15) subscribes once to `HealthService.get()` from
-[Services](/modules/services.md) and writes the result into `apiStatus`:
+`ngOnInit` (line 16) subscribes once to `HealthService.get()` from
+[Services](/modules/services.md) and writes the result into `apiStatus`, clearing
+`apiLoading` in both handlers:
 
-| Outcome | `apiStatus` |
+| Outcome | `apiStatus` | `apiLoading` |
+| --- | --- | --- |
+| initial value | `'unknown'` | `true` |
+| response with a `status` | that `status` ([Health model](/modules/models.md)) | `false` |
+| response without `status` | `'unknown'` | `false` |
+| HTTP error | `'unavailable'` | `false` |
+
+The template renders `API: {{ apiLoading ? 'checking…' : apiStatus }}` inside
+`.app-footer-health`, so the footer reads `API: checking…` until the probe settles and
+`API: ok` on success. While `apiLoading` is true an `aria-hidden`
+`.app-footer-health-spinner` is shown (`*ngIf`, the one place the shell does not use the
+`@if` block of [Conventions](/conventions.md)). Three state classes are bound on the
+same element:
+
+| Class | Condition |
 | --- | --- |
-| initial value | `'unknown'` |
-| response with a `status` | that `status` ([Health model](/modules/models.md)) |
-| response without `status` | `'unknown'` |
-| HTTP error | `'unavailable'` |
+| `is-loading` | `apiLoading` |
+| `is-ok` | `!apiLoading && apiStatus === 'ok'` |
+| `is-error` | `!apiLoading && apiStatus !== 'ok'` |
 
-The template renders it as `API: {{ apiStatus }}` inside
-`.app-footer-health`. There is no retry or polling — the probe runs once per app
-load. Because the shell now issues an HTTP request on init, specs that create
-`AppComponent` must import `HttpClientTestingModule` and flush the `/health`
-request.
+There is no retry or polling — the probe runs once per app load. Because the shell
+issues an HTTP request on init, specs that create `AppComponent` must import
+`HttpClientTestingModule` and flush the `/health` request; see
+[Test suite](/modules/testing.md).
 
 # AppModule
 
