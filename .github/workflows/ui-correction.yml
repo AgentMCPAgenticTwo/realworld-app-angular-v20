@@ -145,7 +145,7 @@ jobs:
       LITELLM_DIRECT_URL: ${{ secrets.LITELLM_DIRECT_URL }}
       LITELLM_DIRECT_API_KEY: ${{ secrets.LITELLM_DIRECT_API_KEY }}
       # runtime-env marker -- the two lines under this are re-stamped IN PLACE
-      CLAUDE_CODE_EFFORT_LEVEL: "low"
+      CLAUDE_CODE_EFFORT_LEVEL: "medium"
       # by provision._restamp_runtime_env, exactly like --model further down and
       # for the same reason: effort and thinking budget are admin-changeable
       # RUNTIME values, not structural changes to this workflow, so changing one
