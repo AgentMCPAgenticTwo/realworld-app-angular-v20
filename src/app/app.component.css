@@ -27,7 +27,37 @@
 }
 
 .app-footer-health {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   margin-right: 0.75rem;
   font-weight: 600;
   color: var(--tm-muted, #6b7280);
+}
+
+.app-footer-health.is-ok {
+  color: #16a34a;
+}
+
+.app-footer-health.is-error {
+  color: #dc2626;
+}
+
+.app-footer-health.is-loading {
+  color: var(--tm-muted, #6b7280);
+}
+
+.app-footer-health-spinner {
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: app-footer-health-spin 0.7s linear infinite;
+}
+
+@keyframes app-footer-health-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
