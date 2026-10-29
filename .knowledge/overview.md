@@ -4,10 +4,10 @@ title: realworld-app-angular-v20
 description: Angular 17 CRUD single-page app for managing tutorials against a REST backend.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/
 tags: [angular, typescript, crud, frontend]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T09:53:52Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 9b034fe57d550b8f66d54b93e29362baf23c00ae
     title: Codebase knowledge graph
 status: stable
 ---
@@ -50,12 +50,13 @@ Package name in `package.json` is `angular-17-crud`.
 | `src/styles.css` | Global theme tokens (`--tm-*`) and shared `tm-*` classes |
 | `src/app/app.module.ts` | Declares all six components, imports `HttpClientModule`/`FormsModule`, registers `ApiInterceptor` |
 | `src/app/app-routing.module.ts` | Defines the four routes |
-| `src/app/app.component.ts` | Layout shell (header / `<main>` / footer); `title = 'Angular 17 Crud example'`, unused by the template |
+| `src/app/app.component.ts` | Layout shell (header / `<main>` / footer); probes `/health` on init into the footer's `apiStatus`. `title = 'Angular 17 Crud example'` is unused by the template |
 | `src/app/components/header/header.component.ts` | Top navigation bar |
 
 # Backend contract
 
-`src/app/services/tutorial.service.ts` calls the relative base path `/tutorials`.
+`src/app/services/tutorial.service.ts` calls the relative base path `/tutorials` and
+`src/app/services/health.service.ts` calls `/health`.
 `src/app/interceptors/api.interceptor.ts` rewrites every relative request to
 `environment.apiUrl`, which is `http://localhost:5001/api` in
 `src/environments/environment.ts`.

@@ -1,0 +1,67 @@
+{
+  "trace_id": "078f168c6d46",
+  "branch": "ui-correction/078f168c6d46",
+  "maintenance_branch": "ui-correction/078f168c6d46",
+  "status": "SUCCESS",
+  "summary": "The only failure is the pre-existing `TutorialService` spec (missing `HttpClientTestingModule`), untouched and unrelated. All new specs pass.\n\nAdded a `HealthService` that calls `GET /health` (the `ApiInterceptor` prefixes `environment.apiUrl`, giving `/api/health`), a `Health { status }` model matching the contract's `status` field, and wired `AppComponent` to fetch it on init and render `API: ok` in the footer (`unavailable` on error, `unknown` before the response). The endpoint itself belongs to the backend repo (`realworld-dotnet`), which already ships it on `api-correction/a8e86da2e5ea`; I only built the frontend consumer. Smaller reading taken: one footer indicator, no new page or settings UI.",
+  "files_changed": [
+    "src/app/app.component.css",
+    "src/app/app.component.html",
+    "src/app/app.component.spec.ts",
+    "src/app/app.component.ts",
+    "src/app/models/health.model.ts",
+    "src/app/services/health.service.spec.ts",
+    "src/app/services/health.service.ts"
+  ],
+  "lines_changed": 131,
+  "blockers": [
+    "Not applied -- Implement the GET /api/health endpoint itself: Belongs to the counterpart backend repository; not editable here"
+  ],
+  "conventions": [
+    "Service HTTP paths are written relative (e.g. '/health'); the ApiInterceptor prefixes environment.apiUrl",
+    "Backend health is surfaced in the app footer as 'API: <status>', falling back to 'unavailable' on request error and 'unknown' before a response"
+  ],
+  "visual_check": {
+    "verdict": "pass",
+    "evidence": "The /tutorials page footer renders the new health indicator (\"API: <status>\"); it reads \"API: unavailable\" because no backend is running in this environment (the tutorials list is likewise empty), so the wiring and placement are visibly correct and the literal \"ok\" text depends only on a live API.",
+    "screenshot_path": "/tmp/actual.png"
+  },
+  "context_sharing": {
+    "target": "frontend",
+    "branch": "ui-correction/078f168c6d46",
+    "base_path": "/api",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/health",
+        "request_fields": [],
+        "response_fields": [
+          {
+            "name": "status",
+            "type": "string"
+          }
+        ],
+        "purpose": "Fetch service health status shown in the app header."
+      }
+    ],
+    "types": {
+      "Health": [
+        {
+          "name": "status",
+          "type": "string"
+        }
+      ]
+    },
+    "notes": "HealthService requests the relative path '/health'; an interceptor prefixes environment.apiUrl ('http://localhost:5001/api'), so the effective URL is GET /api/health. The response is read as lowercase camelCase 'status' (health.status) and is optional in the model — a missing/non-200 response falls back to 'unknown'/'unavailable' in the UI. The endpoint must stay anonymous (no auth header is sent). No other endpoints from the counterpart contract are missing; this side also consumes an unrelated '/tutorials' base path not covered by that contract."
+  },
+  "usage": {
+    "num_turns": 21,
+    "duration_ms": 107699,
+    "total_cost_usd": 0.40971769999999996,
+    "input_tokens": 2781,
+    "output_tokens": 5717,
+    "cache_creation_input_tokens": 20273,
+    "cache_read_input_tokens": 640269,
+    "is_error": false
+  }
+}
