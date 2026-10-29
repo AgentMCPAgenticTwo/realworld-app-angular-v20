@@ -14,7 +14,7 @@ okf_version: "0.2"
 
 # Playbooks
 
-* [Common Tasks](/playbooks/common-tasks.md) - Where to go to change routes, API calls, the data model, the styling or the detail drawer.
+* [Common Tasks](/playbooks/common-tasks.md) - Where to go to change routes, API calls, the data model, the styling, the detail drawer or the tests.
 
 # Reference
 

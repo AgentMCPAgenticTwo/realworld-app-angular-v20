@@ -4,10 +4,10 @@ title: Application architecture
 description: Module-based Angular app layered as routed components, HTTP services and a URL-rewriting interceptor.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [architecture, angular, layers]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-29T09:53:52Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T13:46:25Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 9b034fe57d550b8f66d54b93e29362baf23c00ae
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 3a87e8e68c23204246655d54df5961c9299323ce
     title: Codebase knowledge graph
 status: stable
 ---
@@ -23,6 +23,7 @@ status: stable
 | Cross-cutting | `src/app/interceptors/api.interceptor.ts` | Prefixes relative URLs with `environment.apiUrl` |
 | Model | `src/app/models/tutorial.model.ts`, `src/app/models/health.model.ts` | `Tutorial` and `Health` shapes |
 | Config | `src/environments/environment.ts` | `production`, `apiUrl` |
+| Test | `*.spec.ts`, `src/app/integration/`, `e2e/`, `playwright.config.ts` | Karma/Jasmine unit + integration specs and Playwright browser specs; see [test suites](/modules/testing.md) |
 
 The dependency direction is strictly presentation → service → interceptor → HTTP.
 No component imports `HttpClient` directly. `AppComponent` is the one shell-layer
@@ -50,7 +51,8 @@ AppComponent (app-root)              .app-shell
         TutorialDrawerComponent     child, driven by @Input tutorialId
       TutorialDetailsComponent      route 'tutorials/:id'
       AddTutorialComponent          route 'add'
-  footer.app-footer                  .app-footer-health shows AppComponent.apiStatus
+  footer.app-footer                  .app-footer-health shows AppComponent.apiStatus,
+                                     with .app-footer-health-spinner while apiLoading
 ```
 
 [HeaderComponent](/modules/components-header.md) is purely presentational and holds
@@ -82,8 +84,9 @@ Every service method is invoked from component methods only.
   `src/environments/environment.ts`.
 * **Health probe** — `AppComponent.ngOnInit` fires one `GET /health` per app load
   and degrades to `apiStatus = 'unavailable'` on error, so a missing `/health`
-  endpoint never breaks the shell. Any `TestBed` that declares `AppComponent` must
-  therefore provide `HttpClientTestingModule`.
+  endpoint never breaks the shell. `apiLoading` gates the footer spinner and
+  `aria-busy`. Any `TestBed` that declares `AppComponent` must therefore provide
+  `HttpClientTestingModule`.
 * **Absolute-URL escape hatch** — `ApiInterceptor.intercept` leaves any request whose
   URL already matches `^https?://` untouched.
 * **Two detail surfaces** — `TutorialDetailsComponent` (route) and
@@ -92,7 +95,13 @@ Every service method is invoked from component methods only.
   must usually be applied to both; see [Common Tasks](/playbooks/common-tasks.md).
 * **Styling boundary** — shared visual language lives in `src/styles.css` as `--tm-*`
   tokens and `tm-*` classes; component stylesheets add screen-specific layout only.
-  `tutorial-drawer.component.html` is the one surface not yet on this system.
+  `tutorial-drawer.component.html` is the one surface not yet on this system, and
+  the `.is-ok` / `.is-error` colours in `src/app/app.component.css` are the one
+  place a colour is hard-coded instead of tokenised.
+* **Test boundary** — unit and integration specs stub HTTP at
+  `HttpTestingController`; e2e specs stub it at the browser with `stubApi`
+  (`e2e/support/api-stub.ts`). Neither tier reaches `environment.apiUrl`, so no
+  backend is needed to run the suite. See [test suites](/modules/testing.md).
 
 # Conventions
 
