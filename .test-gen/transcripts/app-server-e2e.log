@@ -1,0 +1,32 @@
+
+> angular-17-crud@0.0.0 start
+> ng serve
+
+- Building...
+
+
+Initial Chunk Files | Names         |  Raw Size
+main.js             | main          |   1.39 MB |
+scripts.js          | scripts       | 206.82 kB |
+styles.css          | styles        | 197.06 kB |
+polyfills.js        | polyfills     |  82.71 kB |
+
+                    | Initial Total |   1.86 MB
+
+Application bundle generation complete. [5.078 seconds]
+Watch mode enabled. Watching for file changes...
+  ➜  Local:   http://localhost:4200/
+- Changes detected. Rebuilding...
+
+
+No output file changes.
+
+Unchanged output files: 4
+Application bundle generation complete. [0.343 seconds]
+- Changes detected. Rebuilding...
+
+
+No output file changes.
+
+Unchanged output files: 4
+Application bundle generation complete. [0.216 seconds]

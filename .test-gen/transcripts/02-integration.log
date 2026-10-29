@@ -1,0 +1,27 @@
+Done. Integration phase complete.
+
+## What I did
+
+Added 4 integration specs (+1 helper) under `src/app/integration/`, named `*.integration.spec.ts` so they match both the runner's pattern (`src/**/*.spec.ts`) and the integration classification. Each wires **real** components + `TutorialService` + `ApiInterceptor` + `Router` together, mocking only the HTTP boundary (`HttpClientTestingModule` — Angular's MSW equivalent). Every URL assertion is on the interceptor-prefixed URL the app actually sends (`http://localhost:5001/api/...`).
+
+| File | Covers |
+|---|---|
+| `tutorials-list.integration.spec.ts` | list loading/empty/error/populated, search variants, remove-all ±, drawer fetch/404/publish→refetch/delete→close |
+| `tutorial-details.integration.spec.ts` | edit screen activated by the real router at `/tutorials/:id`, prefill, update, publish, delete→redirect, failure paths, view mode |
+| `add-tutorial.integration.spec.ts` | POST body/url, success, empty fields, 400 keeps form, reset |
+| `routing.integration.spec.ts` | real `AppModule` shell: `''`→`/tutorials` redirect, header nav, `routerLinkActive`, unknown url |
+
+**Result: 41 passed, 0 failed, 3 skipped** (run twice, identical). Combined-suite coverage: **96.24% lines**, 78.94% branches.
+
+## Findings — 3 real application defects (tests kept, skipped with `KNOWN-DEFECT:`)
+
+1. **high** — `TutorialService.findByTitle` interpolates the title raw into the query string, so searching `a&b c` sends `?title=a&b c` and the server parses two parameters. `src/app/services/tutorial.service.ts:40`
+2. **medium** — `TutorialDetailsComponent` reads `res.message` unguarded, so a PUT answered with an empty body (normal REST) throws a TypeError and the confirmation never appears. The sibling drawer guards this correctly with `res && res.message` — the omission looks accidental. `tutorial-details.component.ts:58`
+3. **low** — list and edit screens render their empty/"cannot access" state while the first request is still in flight, and errors are only `console.error`'d, so there is no user-visible error state.
+
+## Blockers reported (not fixed, per the rules)
+
+- `src/app/services/tutorial.service.spec.ts` fails on `main` already (`No provider for HttpClient!` — empty `TestBed`). It's a defective *test*, and the unit phase owns that file, so I left it to avoid a cross-phase conflict.
+- `npm run test` runs headed Chrome in watch mode; that can only be pinned via `angular.json`, which is application config I must not touch. I ran with explicit `--watch=false --browsers=ChromeHeadless`.
+
+No application file was modified. Output written to `.test-gen/outputs/02-integration.json`, plan to `.test-gen/plan/integration.md`.
