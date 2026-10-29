@@ -1,0 +1,18 @@
+Done. Summary of the e2e phase:
+
+**Added** (no application file touched — only `package.json` devDeps + a `test:e2e` script, which TASK.md allows):
+- `playwright.config.ts` — chromium, `baseURL` from `APP_URL`/port 4200, `webServer: npm run start` with `reuseExistingServer`, `retries: CI ? 1 : 0`, `trace: retain-on-failure`
+- `e2e/support/api.ts` — CORS-aware `page.route` fake of the tutorials REST API (the Express backend at `localhost:5001` isn't running in CI). It records requests *and* server-side state, so tests assert persisted results rather than "a mock was called"
+- 5 specs: `tutorials-list`, `add-tutorial`, `tutorial-drawer`, `tutorial-edit`, `accessibility`
+- `.test-gen/plan/e2e.md`, `.test-gen/outputs/03-e2e.json`
+
+**Results (two consecutive runs, identical): 30 passed, 0 failed, 4 skipped, no flakes.**
+
+The 4 skipped are the axe smoke checks, marked `test.fixme` with `KNOWN-DEFECT` comments because they genuinely fail against the app — not loosened:
+- `listitem` (serious): header nav puts `<li>` directly in a `<div>`, no `<ul>` — every page
+- `color-contrast` (serious): `.app-footer-note`, `.tm-subtitle`, `.badge-primary` below 4.5:1
+
+Three further app defects found and reported, each pinned by a passing test that documents current behaviour so a fix will make it fail:
+- a failed `GET /tutorials` renders the cheerful "No tutorials yet" empty state — users are told they have no data when the server is down
+- the add form posts `{title:"", description:""}` and reports success despite `required` inputs
+- rejected update/create give the user no feedback at all (errors go only to `console.error`)

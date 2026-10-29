@@ -1,0 +1,49 @@
+{
+  "suites": {
+    "unit": {
+      "status": "error",
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "detail": "s: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")\\n[2977:2977:1029/114747.058481:ERROR:ui/ozone/platform/x11/ozone_platform_x11.cc:257] Missing X server or $DISPLAY\\n[2977:2977:1029/114747.058499:ERROR:ui/aura/env.cc:253] The platform failed to initialize.  Exiting.\\n\\n29 10 2026 11:47:47.067:ERROR [launcher]: Chrome stdout: \\n29 10 2026 11:47:47.067:ERROR [launcher]: "
+    },
+    "integration": {
+      "status": "not_run",
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "detail": ""
+    },
+    "e2e": {
+      "status": "passed",
+      "passed": 30,
+      "failed": 0,
+      "skipped": 4,
+      "duration_ms": 25684,
+      "detail": ""
+    }
+  },
+  "coverage": null,
+  "commands": [
+    {
+      "label": "unit",
+      "cmd": "npm run test",
+      "cwd": ".",
+      "exit_code": 124,
+      "duration_ms": 1500102,
+      "log": ".test-gen/verify/raw/unit.log"
+    },
+    {
+      "label": "e2e",
+      "cmd": "npx playwright test --reporter=json,html",
+      "cwd": ".",
+      "exit_code": 0,
+      "duration_ms": 26707,
+      "log": ".test-gen/verify/raw/e2e.log"
+    }
+  ],
+  "notes": [],
+  "verified": true
+}

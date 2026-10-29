@@ -1,0 +1,77 @@
+{
+  "phase": "integration",
+  "status": "SUCCESS",
+  "summary": "Added 4 integration specs (50 specs: 49 passing, 1 skipped as a KNOWN-DEFECT) covering the tutorials list + drawer, the details/edit screen, the add screen and the real application routes. Each spec wires the REAL TutorialService, the REAL ApiInterceptor and the REAL Router, faking only the HTTP backend via HttpClientTestingModule/HttpTestingController (the Angular equivalent of MSW: it intercepts below the interceptor chain, so every asserted URL is the fully prefixed http://localhost:5001/api/... one). Loading, empty, error and populated states are covered for all three data-fetching screens, plus the mutation paths (create, update, publish/unpublish, delete, delete-all) and their failure branches. Combined suite line coverage is 98.42% (target 70%). My last run: 74 passed / 1 failed / 1 skipped — the single failure is PRE-EXISTING in the repo's own src/app/services/tutorial.service.spec.ts (it injects TutorialService without HttpClientTestingModule); it fails identically on a clean checkout before any of my changes and belongs to the unit phase. No application file was modified.",
+  "test_files": [
+    {
+      "file_path": "src/app/components/tutorials-list/tutorials-list.integration.spec.ts",
+      "type": "integration",
+      "description": "Tutorials list screen with its real child drawer component, real service and real interceptor: initial load (in-flight/empty/error/populated), search by title incl. reserved characters, delete-all + refresh, and the full drawer lifecycle (fetch by id, 404 'Not found', 500, publish -> PUT -> list refetch, delete -> close + refetch, backdrop close, switching selection, edit link href). 23 specs."
+    },
+    {
+      "file_path": "src/app/components/tutorial-details/tutorial-details.integration.spec.ts",
+      "type": "integration",
+      "description": "Details/edit screen driven by the ActivatedRoute :id param: fetch and render, in-flight placeholder, 404 and 500 both falling back to 'Cannot access this Tutorial', view-mode branches, update with/without a server message, publish and unpublish toggles, failure branches that must not show a confirmation, and delete -> router.navigate(['/tutorials']). 15 specs."
+    },
+    {
+      "file_path": "src/app/components/add-tutorial/add-tutorial.integration.spec.ts",
+      "type": "integration",
+      "description": "Add screen with real ngModel bindings, real service and real interceptor: POST body and URL, success panel replacing the form, 'Add another' resetting state, 400 and 500 error branches keeping the form and typed values, and a blank submit. 8 specs."
+    },
+    {
+      "file_path": "src/app/app-routing.integration.spec.ts",
+      "type": "integration",
+      "description": "App shell + header + the real route table wired to the real components: '/' redirects to /tutorials and loads it, /add renders the form without touching the API, /tutorials/:id fetches the tutorial named in the URL, a missing id shows the placeholder, and header-link navigation between screens. 6 specs."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "medium",
+      "title": "Search title is interpolated into the query string without URL-encoding",
+      "description": "TutorialService.findByTitle builds its URL as `${baseUrl}?title=${title}`. A title containing reserved characters (&, =, #, +) is not encoded, so the server receives a truncated title plus spurious extra query parameters. Searching for 'A&B=C' sends GET /api/tutorials?title=A&B=C, which a backend parses as title='A' and B='C'. '+' would additionally be decoded as a space. The fix is encodeURIComponent(title), or better, HttpParams.",
+      "file": "src/app/services/tutorial.service.ts",
+      "test": "src/app/components/tutorials-list/tutorials-list.integration.spec.ts -> 'Tutorials list screen (integration) searching by title url-encodes a title containing reserved characters'",
+      "evidence": "Test is skipped with xit + a KNOWN-DEFECT comment. When enabled it fails with: Expected one matching request for criteria \"Match URL: http://localhost:5001/api/tutorials?title=A%26B%3DC\", found none. Requests received are: GET http://localhost:5001/api/tutorials?title=A&B=C. The adjacent passing spec 'sends a title containing reserved characters unencoded (current behaviour)' pins the actual behaviour.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "Data-fetching screens render their empty/error state while the request is still in flight",
+      "description": "Neither the tutorials list nor the details screen has a loading state. TutorialsListComponent.tutorials starts undefined, so the template's @else branch paints the full 'No tutorials yet' empty state (icon, heading, 'add your first tutorial' copy) for the whole duration of the initial GET. TutorialDetailsComponent likewise shows 'Cannot access this Tutorial...' until the response arrives. On a slow connection the user is told there is no data, then the real data appears — and an outright request failure is visually indistinguishable from a genuinely empty list, since the error handler only console.errors and leaves `tutorials` undefined.",
+      "file": "src/app/components/tutorials-list/tutorials-list.component.ts",
+      "test": "src/app/components/tutorials-list/tutorials-list.integration.spec.ts -> 'shows the empty state while the initial request is still in flight' and 'shows the empty state and keeps the screen usable when the list request fails'",
+      "evidence": "With the GET outstanding, fixture.nativeElement.querySelector('.tm-empty') is non-null and contains 'No tutorials yet'. After flushing a 500, component.tutorials is still undefined and the same empty state is rendered with no error message anywhere in the DOM.",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "No request fails visibly: every error path is swallowed into console.error",
+      "description": "Every subscribe() in the app handles errors with `error: (e) => console.error(e)` only (list load, delete-all, search, create, update, publish, delete; the drawer additionally handles 404). A failed create, update or delete therefore produces no user-visible feedback at all — the Add form simply sits there after a 500, and a failed Delete on the details screen silently leaves the user on the page. Users cannot distinguish 'saved' from 'failed'.",
+      "file": "src/app/components/add-tutorial/add-tutorial.component.ts",
+      "test": "src/app/components/add-tutorial/add-tutorial.integration.spec.ts -> 'keeps the form on screen when the server rejects the tutorial'; src/app/components/tutorial-details/tutorial-details.integration.spec.ts -> 'shows no confirmation when the update fails'",
+      "evidence": "After flushing a 400 with body {message:'Content can not be empty!'}, the DOM contains no .alert, no .alert-danger and no occurrence of the server message; the only change is a console.error. Same after a 500 on PUT and on DELETE.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "The add-tutorial form marks fields required but never enforces it",
+      "description": "Both inputs in add-tutorial.component.html carry the `required` attribute, but they are bare [(ngModel)] inputs outside any <form>/NgForm, and saveTutorial() does no validation. Pressing Submit on a blank form issues POST /api/tutorials with {title:'',description:''} and then shows the success panel if the backend accepts it. The `required` attribute is purely decorative here.",
+      "file": "src/app/components/add-tutorial/add-tutorial.component.html",
+      "test": "src/app/components/add-tutorial/add-tutorial.integration.spec.ts -> 'still posts empty strings when submitted with a blank form'",
+      "evidence": "Clicking Submit with untouched inputs produces exactly one request whose body equals {title: '', description: ''}.",
+      "source": "test"
+    }
+  ],
+  "quarantined": [],
+  "self_reported": {
+    "passed": 74,
+    "failed": 1,
+    "skipped": 1
+  },
+  "report_path": ".test-gen/plan/integration.md",
+  "blockers": [
+    "Pre-existing failure not caused by this phase and not fixed by it (fixing it would mean editing another phase's file): src/app/services/tutorial.service.spec.ts 'TutorialService should be created' fails with NullInjectorError: No provider for HttpClient! It fails identically on the clean checkout before any of my changes (baseline run: TOTAL 1 FAILED, 25 SUCCESS). It is a defective unit spec, not an application defect, so it is reported here rather than as a finding.",
+    "The repo's karma setup has no checked-in karma.conf.js and angular.json does not set a browser, so `npm run test` launches headful Chrome and never exits in CI. I ran the suite with `npx ng test --watch=false --browsers=ChromeHeadless`. I did not add a karma.conf.js or edit angular.json, since angular.json is application config that the verification run reverts; if the verification run hangs, that is why.",
+    "merge: .test-gen/guard.json was also changed by the unit phase; kept that version, this phase's change to it was dropped"
+  ]
+}

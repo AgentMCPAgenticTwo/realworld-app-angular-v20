@@ -1,0 +1,94 @@
+{
+  "phase": "e2e",
+  "status": "SUCCESS",
+  "summary": "Added Playwright 1.63.0 (+ @axe-core/playwright 4.13.0), playwright.config.ts and 5 specs in e2e/ covering the app's primary journeys: browsing the tutorials list (populated / empty / in-flight / server-error), searching by title, creating a tutorial, the details drawer (view, publish, unpublish, delete, 404), and the edit page (load, update, publish, delete-redirect, unknown id, failed update). The Express backend at http://localhost:5001/api is not running in CI, so every spec stubs it at the HTTP boundary with page.route via a CORS-aware in-memory fake (e2e/support/api.ts) built from the tutorial REST contract; the fake records calls and state so tests assert persisted results, not just that a mock was called. Two runs: 30 passed, 0 failed, 4 skipped, no flakes. The 4 skipped tests are the axe accessibility smoke checks (test.fixme) - they fail against the app as it is on every page, and are reported as findings rather than loosened.",
+  "test_files": [
+    {
+      "file_path": "e2e/tutorials-list.spec.ts",
+      "type": "e2e",
+      "description": "Tutorials list: populated/empty/in-flight/error states, search by title (match and no-match), modal backdrop behaviour, drawer reopen, Remove All success and server failure."
+    },
+    {
+      "file_path": "e2e/add-tutorial.spec.ts",
+      "type": "e2e",
+      "description": "Create flow: POST payload and success banner, the new tutorial appearing on the list, 'Add another' resetting the form, blank submit, and a server-rejected creation."
+    },
+    {
+      "file_path": "e2e/tutorial-drawer.spec.ts",
+      "type": "e2e",
+      "description": "Details drawer: full details, publish/unpublish persisting status, delete removing the card, 'Not found' on a 404, backdrop close, and navigation to the edit page."
+    },
+    {
+      "file_path": "e2e/tutorial-edit.spec.ts",
+      "type": "e2e",
+      "description": "Edit page: loading the tutorial from the url, saving title/description, publishing, delete redirecting to the list, unknown id, failed load and failed update."
+    },
+    {
+      "file_path": "e2e/accessibility.spec.ts",
+      "type": "e2e",
+      "description": "axe-core smoke check (wcag2a/2aa/21a/21aa, no serious or critical violations) on the list, the open drawer, the add page and the edit page. All four are test.fixme because the app currently fails them."
+    },
+    {
+      "file_path": "e2e/support/api.ts",
+      "type": "e2e",
+      "description": "Shared CORS-aware page.route fake of the tutorials REST API (GET all/search/one, POST, PUT, DELETE one/all), plus a failure stub; records requests and server-side state."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "title": "Navigation list items are not inside a list (axe `listitem`, serious)",
+      "description": "src/app/components/header/header.component.html puts two <li class=\"nav-item\"> elements directly inside <div class=\"navbar-nav\">, with no <ul>/<ol> parent. Screen readers do not announce the main navigation as a list and the item count is lost. Present on every page of the app.",
+      "file": "src/app/components/header/header.component.html",
+      "test": "e2e/accessibility.spec.ts :: Accessibility smoke > the tutorials list has no serious or critical accessibility violations",
+      "evidence": "axe-core violation `listitem` (impact: serious) on targets `li:nth-child(1), li:nth-child(2)` on /tutorials, /add and /tutorials/:id. Assertion that fails: `expect(blocking).toEqual([])`.",
+      "source": "test"
+    },
+    {
+      "severity": "high",
+      "title": "Text below the WCAG AA contrast ratio on every page (axe `color-contrast`, serious)",
+      "description": "`.app-footer-note`, `.tm-subtitle` and the drawer's `.badge-primary` buttons do not meet the 4.5:1 contrast ratio required by WCAG 2.1 AA, so the subtitles, the footer note and the Publish/UnPublish badges are hard to read.",
+      "file": "src/app/app.component.html",
+      "test": "e2e/accessibility.spec.ts :: Accessibility smoke > the open details drawer has no serious or critical accessibility violations",
+      "evidence": "axe-core violation `color-contrast` (impact: serious). Targets: `.app-footer-note` (/add, /tutorials/:id), `.tm-subtitle, .app-footer-note` (/tutorials), `.tm-subtitle, .badge-primary, .app-footer-note` (drawer open). Assertion that fails: `expect(blocking).toEqual([])`.",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "A failed tutorials request is indistinguishable from an empty list",
+      "description": "TutorialsListComponent.retrieveTutorials(), searchTitle() and removeAllTutorials() only `console.error(e)` on failure. When GET /api/tutorials returns 500 the user sees the cheerful 'No tutorials yet - add your first tutorial to get started' empty state, i.e. the app silently claims the user has no data when in fact the server is broken. The same applies to the edit page, which shows 'Cannot access this Tutorial...' for both a 404 and a 500.",
+      "file": "src/app/components/tutorials-list/tutorials-list.component.ts",
+      "test": "e2e/tutorials-list.spec.ts :: Tutorials list > stays on the empty state when the tutorials request fails",
+      "evidence": "With every /api/tutorials call stubbed to 500, /tutorials renders the heading 'No tutorials yet' and zero article cards; no alert or error region appears anywhere in the DOM. The test documents this behaviour rather than asserting the desired one.",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "The add-tutorial form accepts a blank title and description",
+      "description": "The title and description inputs in add-tutorial.component.html carry `required`, but they are plain [(ngModel)] inputs outside an Angular form with no validation gate on saveTutorial(). Clicking Submit with both fields empty POSTs {title: '', description: ''} and shows 'Tutorial was submitted successfully!', creating an unnamed tutorial.",
+      "file": "src/app/components/add-tutorial/add-tutorial.component.ts",
+      "test": "e2e/add-tutorial.spec.ts :: Add a tutorial > submits an empty title and description when the form is submitted blank",
+      "evidence": "POST body recorded by the stub is exactly {\"title\":\"\",\"description\":\"\"} and the success alert is rendered. The test asserts the current (wrong) behaviour so a future fix makes it fail loudly.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "A rejected update or creation leaves the user with no feedback",
+      "description": "TutorialDetailsComponent.updateTutorial()/deleteTutorial() and AddTutorialComponent.saveTutorial() swallow HTTP errors into console.error. On a 500 the form simply does nothing - no alert, no retry hint - so a user can believe an edit was lost or, worse, re-submit blindly.",
+      "file": "src/app/components/tutorial-details/tutorial-details.component.ts",
+      "test": "e2e/tutorial-edit.spec.ts :: Edit a tutorial > does not confirm an update that the server rejected",
+      "evidence": "With PUT /api/tutorials/2 stubbed to 500, clicking Update renders no element with role=alert (`expect(page.getByRole('alert')).toHaveCount(0)` passes).",
+      "source": "test"
+    }
+  ],
+  "quarantined": [],
+  "self_reported": {
+    "passed": 30,
+    "failed": 0,
+    "skipped": 4
+  },
+  "report_path": ".test-gen/reports/e2e-results.json",
+  "blockers": [
+    "merge: .test-gen/guard.json was also changed by the unit phase; kept that version, this phase's change to it was dropped"
+  ]
+}

@@ -1,0 +1,25 @@
+Done. Phase 01-unit complete.
+
+## What I did
+
+**Baseline first:** `ng test` reported **1 failure / 26 specs** before I touched anything — the generated `TutorialService` spec configures an empty TestBed, so `HttpClient` has no provider. That's a test defect, not an app defect; fixed and reported with `source: "analysis"`.
+
+**No runner added** — karma + jasmine + karma-coverage were already there. **No application file was modified** (`git status` shows only `*.spec.ts` files).
+
+**Result: 87 specs — 83 passing, 4 skipped as KNOWN-DEFECT, 0 failing.** Coverage: **100% lines, 100% statements, 94.4% branches**, well past the 70% target.
+
+Work went in risk order: `TutorialService` (every verb/url/body + error paths) → `ApiInterceptor` (absolute vs relative, slash normalisation, header/body preservation) → `TutorialsListComponent` (loading/empty/error/populated, search, the destructive `removeAllTutorials`) → details/drawer/add components.
+
+## Three real application defects found
+
+1. **high** — `TutorialDetailsComponent` reads `res.message` with no null guard (the drawer guards with `res &&`). A 204/empty-body PUT throws an unhandled `TypeError` inside the subscriber. When I ran this test unskipped it crashed the Karma browser with a disconnect, which is how I confirmed the error genuinely escapes rather than being swallowed.
+2. **medium** — `findByTitle` interpolates the term straight into the query string, so `&` splits it into extra params and `#` truncates it at the fragment. The backend searches for something other than what the user typed.
+3. **low** — the drawer template branches on `currentTutorial.id` truthiness while the component's own `open` getter correctly uses `!== null && !== undefined`; a tutorial with id 0 renders a blank drawer.
+
+Each is kept as a red test with an `xit` + `KNOWN-DEFECT` comment. I verified all three actually fail by temporarily enabling them and re-running, then reverted to skipped — I didn't want to report a defect I hadn't watched fail.
+
+## One thing to flag
+
+`npm run test` is plain `ng test`, which defaults to the **non-headless** `Chrome` launcher. Every run here used `--watch=false --browsers=ChromeHeadless`. I left `package.json` alone deliberately (shared with the parallel phases, and the analyze phase already ran the suite), but if the verification run invokes `npm run test` bare it may hang or fail to launch a browser. Recorded in `blockers`.
+
+Output written to `.test-gen/outputs/01-unit.json` (validated against the schema); plan at `.test-gen/plan/unit.md`.
