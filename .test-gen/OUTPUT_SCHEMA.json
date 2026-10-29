@@ -1,0 +1,203 @@
+{
+  "$defs": {
+    "Finding": {
+      "description": "A defect in the APPLICATION the tests (or the QA pass) exposed.\n\nThe agent never fixes these -- it keeps the failing test and reports here, so the\nresult describes the app as it is, not as the agent wished it were.",
+      "properties": {
+        "severity": {
+          "default": "medium",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "file": {
+          "default": "",
+          "title": "File",
+          "type": "string"
+        },
+        "test": {
+          "default": "",
+          "title": "Test",
+          "type": "string"
+        },
+        "evidence": {
+          "default": "",
+          "title": "Evidence",
+          "type": "string"
+        },
+        "story_id": {
+          "default": "",
+          "title": "Story Id",
+          "type": "string"
+        },
+        "source": {
+          "default": "test",
+          "enum": [
+            "test",
+            "qa",
+            "analysis"
+          ],
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "Quarantined": {
+      "properties": {
+        "test": {
+          "title": "Test",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "test",
+        "reason"
+      ],
+      "title": "Quarantined",
+      "type": "object"
+    },
+    "SelfReported": {
+      "properties": {
+        "passed": {
+          "default": 0,
+          "title": "Passed",
+          "type": "integer"
+        },
+        "failed": {
+          "default": 0,
+          "title": "Failed",
+          "type": "integer"
+        },
+        "skipped": {
+          "default": 0,
+          "title": "Skipped",
+          "type": "integer"
+        }
+      },
+      "title": "SelfReported",
+      "type": "object"
+    },
+    "TestFile": {
+      "properties": {
+        "file_path": {
+          "title": "File Path",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "unit",
+            "integration",
+            "e2e",
+            "qa"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "file_path",
+        "type"
+      ],
+      "title": "TestFile",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "phase": {
+      "enum": [
+        "analyze",
+        "unit",
+        "integration",
+        "e2e",
+        "qa"
+      ],
+      "title": "Phase",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "SUCCESS",
+        "PARTIAL",
+        "FAILED",
+        "SKIPPED"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "summary": {
+      "title": "Summary",
+      "type": "string"
+    },
+    "test_files": {
+      "items": {
+        "$ref": "#/$defs/TestFile"
+      },
+      "title": "Test Files",
+      "type": "array"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "quarantined": {
+      "items": {
+        "$ref": "#/$defs/Quarantined"
+      },
+      "title": "Quarantined",
+      "type": "array"
+    },
+    "self_reported": {
+      "$ref": "#/$defs/SelfReported"
+    },
+    "report_path": {
+      "default": "",
+      "title": "Report Path",
+      "type": "string"
+    },
+    "blockers": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Blockers",
+      "type": "array"
+    }
+  },
+  "required": [
+    "phase",
+    "status",
+    "summary"
+  ],
+  "title": "test-gen phase output",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
