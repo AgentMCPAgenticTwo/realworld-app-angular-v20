@@ -2,6 +2,27 @@
 
 ## 2026-10-29
 
+* **Creation**: Added `modules/testing.md` for the new three-tier test layer —
+  `*.component.behaviour.spec.ts` unit specs, `src/app/integration/*.integration.spec.ts`,
+  and the Playwright suite in `e2e/` with `playwright.config.ts` and the `stubApi`
+  backend stub in `e2e/support/api-stub.ts` (trace `c303dd2e7edc`, commit
+  `3a87e8e68c23204246655d54df5961c9299323ce`).
+* **Update**: `modules/app-shell.md` — `AppComponent.apiLoading`, the
+  `.is-loading` / `.is-ok` / `.is-error` class bindings, `aria-busy`, the
+  `.app-footer-health-spinner` and its `prefers-reduced-motion` rule, and the note
+  that a 200 response without a `status` field paints `.is-error`.
+* **Update**: `conventions.md` — new **Testing** section; the Templates section now
+  records `app.component.html`'s `*ngIf` as the one exception to the `@if` rule.
+* **Update**: `overview.md` (Playwright/axe in the stack row, `test:e2e` script,
+  `playwright.config.ts` and `e2e/support/api-stub.ts` entry points),
+  `architecture.md` (new Test layer, test boundary, spinner in the render tree,
+  hard-coded health colours), `playbooks/common-tasks.md` (new "Add a test" task,
+  reworked "Run and test" and footer-health tasks),
+  `reference/graph-queries.md` (re-counted graph shape; the `.test-gen` harness now
+  dominates it), `modules/index.md` and `index.md`.
+* **Note**: `e2e/health-footer.spec.ts` was authored before the footer indicator
+  landed — its `test.fixme` markers and its "renders no API status" assertion no
+  longer match `src/app/app.component.html`. Recorded in `modules/testing.md`.
 * **Update**: `modules/services.md` — documented the new `HealthService`
   (`src/app/services/health.service.ts`, `GET /health`) alongside `TutorialService`;
   the services directory now holds two HTTP clients (trace `078f168c6d46`, commit

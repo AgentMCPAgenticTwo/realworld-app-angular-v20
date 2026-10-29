@@ -1,13 +1,13 @@
 ---
 type: Playbook
 title: Common tasks
-description: Where to go to change routes, API calls, the data model, the styling or the detail drawer.
+description: Where to go to change routes, API calls, the data model, the styling, the detail drawer or the tests.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [playbook, howto]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-29T09:53:52Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T13:46:25Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 9b034fe57d550b8f66d54b93e29362baf23c00ae
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 3a87e8e68c23204246655d54df5961c9299323ce
     title: Codebase knowledge graph
 status: stable
 ---
@@ -90,15 +90,19 @@ additionally emits `changed` so the list refreshes, and handles HTTP 404 via
 
 # Change the footer API health indicator
 
-1. The probe lives in `AppComponent.ngOnInit` (`src/app/app.component.ts:15`) and
+1. The probe lives in `AppComponent.ngOnInit` (`src/app/app.component.ts:16`) and
    calls `HealthService.get()` from `src/app/services/health.service.ts`.
 2. The displayed text is `.app-footer-health` in `src/app/app.component.html`;
-   its styling is `.app-footer-health` in `src/app/app.component.css`.
-3. Widen `Health` in `src/app/models/health.model.ts` to surface more fields.
-4. Any new spec that creates `AppComponent` must import `HttpClientTestingModule`
+   its state classes (`.is-ok`, `.is-error`), the spinner and the
+   `app-footer-health-spin` keyframes are in `src/app/app.component.css`.
+3. The loading state is the `apiLoading` field — set it in both `subscribe`
+   handlers if you add a new outcome, or the spinner never clears.
+4. Widen `Health` in `src/app/models/health.model.ts` to surface more fields.
+5. Any new spec that creates `AppComponent` must import `HttpClientTestingModule`
    and flush the `/health` request, as `app.component.spec.ts` does.
 
-See [the shell module](/modules/app-shell.md) and [services](/modules/services.md).
+See [the shell module](/modules/app-shell.md), [services](/modules/services.md)
+and [test suites](/modules/testing.md).
 
 # Change what opens the drawer
 
@@ -109,6 +113,23 @@ from that input, so there is no separate visibility flag. See
 
 # Run and test
 
-* `npm start` — dev server on `ng serve`.
-* `npm test` — Karma + Jasmine over every `*.spec.ts`.
+* `npm start` — dev server on `ng serve` (port 4200).
+* `npm test` — Karma + Jasmine over every `src/**/*.spec.ts`, i.e. the unit and
+  integration tiers.
+* `npm run test:e2e` — Playwright over `e2e/`; `playwright.config.ts` starts
+  `npm run start` itself and reuses an already-running server.
 * `npm run build` — production bundle.
+
+# Add a test
+
+| Kind | Where | Pattern |
+| --- | --- | --- |
+| Component or service unit test | beside the source file | `<name>.component.behaviour.spec.ts` for behaviour-per-test additions |
+| Cross-component test | `src/app/integration/` | `<topic>.integration.spec.ts`, `HttpClientTestingModule` + real collaborators |
+| Browser test | `e2e/` | `<topic>.spec.ts`, open with `await stubApi(page)` from `e2e/support/api-stub.ts` |
+
+Drive error and empty states through `StubOptions` (`list`, `detail`,
+`listStatus`, `writeStatus`) rather than new route handlers, and assert on the
+returned `ApiCall[]` to check what the UI sent. See
+[test suites](/modules/testing.md) and the testing section of
+[Conventions](/conventions.md).

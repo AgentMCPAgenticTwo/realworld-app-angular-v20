@@ -9,7 +9,20 @@
     <div class="container">
       <span>&copy; Tutorial Manager</span>
       <span class="app-footer-note">
-        <span class="app-footer-health">API: {{ apiStatus }}</span>
+        <span
+          class="app-footer-health"
+          [class.is-loading]="apiLoading"
+          [class.is-ok]="!apiLoading && apiStatus === 'ok'"
+          [class.is-error]="!apiLoading && apiStatus !== 'ok'"
+          [attr.aria-busy]="apiLoading"
+        >
+          <span
+            class="app-footer-health-spinner"
+            *ngIf="apiLoading"
+            aria-hidden="true"
+          ></span>
+          API: {{ apiStatus }}
+        </span>
         Built with Angular
       </span>
     </div>

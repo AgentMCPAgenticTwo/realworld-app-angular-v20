@@ -4,10 +4,10 @@ title: Graph queries
 description: How to query the live codebase knowledge graph for this project.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/.codebase-memory
 tags: [reference, tooling, graph]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-27T12:01:30Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T13:46:25Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 0e3b5208a2e4f08afb8000ab0a8fa4e0d0ff5487
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 3a87e8e68c23204246655d54df5961c9299323ce
     title: Codebase knowledge graph
 status: stable
 ---
@@ -29,14 +29,25 @@ The graph lives at `.codebase-memory/graph.db.zst` and is served by the
 
 # Shape of this graph
 
-At the indexed commit: 212 nodes, 327 edges. Labels include `Variable` (75),
-`File` (39), `Method` (33), `Module` (29), `Folder` (16), `Class` (10),
-`Route` (2), `Function` (1). Edge types include `DEFINES`, `DEFINES_METHOD`,
-`IMPORTS`, `CALLS`, `USAGE`, `DECORATES`, `TESTS_FILE` and `HTTP_CALLS`.
+At the indexed commit: 1203 nodes, 1714 edges. Labels include `Variable` (675),
+`File` (119), `Section` (118), `Module` (106), `Function` (75), `Method` (42),
+`Folder` (33), `Class` (18), `Route` (4), `Interface` (3). Edge types include
+`DEFINES`, `CALLS`, `USAGE`, `IMPORTS`, `DEFINES_METHOD`, `WRITES`, `DECORATES`,
+`TESTS_FILE`, `CONFIGURES` and `HTTP_CALLS`.
 
-Note that non-source files are indexed too — `.ui-gen/corrections/*.json`,
-`.sage-maintenance/*.json` and `.github/workflows/ui-correction.yml` contribute many
-`Variable` nodes. Filter with `file_pattern: "src/**"` to stay inside the app.
+Note that non-source files dominate the node count — `.test-gen/*.py` and its
+JSON artefacts, `.ui-gen/corrections/*.json`, `.sage-maintenance/*.json` and the
+`.github/workflows/*.yml` files. Every cluster, boundary and layer the graph
+reports except the `src`/`e2e` ones comes from the `.test-gen` Python harness, and
+`get_architecture`'s single entry point and top hotspot are `stubApi` in
+`e2e/support/api-stub.ts`. Filter with `file_pattern: "src/**"` to stay inside the
+application, or `"e2e/**"` for the browser tests
+(see [test suites](/modules/testing.md)).
+
+The four reported `Route` nodes are inferred from HTTP call sites, not from the
+Angular router — the real route table is `routes` in
+`src/app/app-routing.module.ts`, and the `https://example.test/thing` route comes
+from `src/app/interceptors/api.interceptor.spec.ts`.
 
 # Useful queries
 

@@ -4,10 +4,10 @@ title: Project conventions
 description: Naming, file-layout, styling, template and HTTP-subscription conventions used throughout the app.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [conventions, angular, typescript, styling]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T13:46:25Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 3a87e8e68c23204246655d54df5961c9299323ce
     title: Codebase knowledge graph
 status: stable
 ---
@@ -106,7 +106,27 @@ from the `tm-*` layer.
 # Templates
 
 Control flow uses the Angular 17 built-in blocks `@if` / `@else` / `@for` with a
-`track` expression — not `*ngIf` / `*ngFor`.
+`track` expression — not `*ngIf` / `*ngFor`. The one exception is the footer health
+spinner in `src/app/app.component.html`, which uses `*ngIf`; prefer `@if` in new
+markup.
+
+# Testing
+
+* Every source file has a sibling `*.spec.ts`; the four CRUD components
+  additionally have a `*.component.behaviour.spec.ts` holding one behaviour per
+  test, named as a sentence.
+* Component and service tests fake only the HTTP transport
+  (`HttpClientTestingModule` + `HttpTestingController`), never in-repo
+  collaborators.
+* Cross-component tests live in `src/app/integration/` as
+  `*.integration.spec.ts`; browser tests live in `e2e/` as Playwright
+  `*.spec.ts` and stub the backend through `stubApi` from
+  `e2e/support/api-stub.ts`.
+* Expected request URLs come from `environment.apiUrl`, not literals.
+* A test that records a real defect stays in the file, parked with
+  `test.fixme` / a skip marker and a `KNOWN-DEFECT:` comment.
+
+See [test suites](/modules/testing.md) for the full layout.
 
 # Types
 
