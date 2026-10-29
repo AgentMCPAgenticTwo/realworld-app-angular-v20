@@ -1,0 +1,73 @@
+{
+  "phase": "integration",
+  "status": "SUCCESS",
+  "summary": "Added 4 integration specs (44 specs: 41 passing, 3 skipped as KNOWN-DEFECT) under src/app/integration/, wiring the real components, the real TutorialService, the real ApiInterceptor and the real Router together with only the HTTP boundary mocked via HttpClientTestingModule. Covered loading / empty / error / populated states for every data-fetching screen (tutorials list, edit screen, add screen) plus the drawer publish/delete round-trips and app-shell routing. Every assertion is on the fully prefixed url the app really sends (http://localhost:5001/api/...), so the interceptor is exercised end to end. Three real application defects were found and are kept as skipped tests with KNOWN-DEFECT comments. Combined suite coverage reported by karma-coverage: 96.24% lines, 78.94% branches - above the 70% target. Note: one pre-existing repo test (src/app/services/tutorial.service.spec.ts 'should be created') fails on main because it configures an empty TestBed with no HttpClient provider; it is not mine to fix in this phase and is listed in blockers.",
+  "test_files": [
+    {
+      "file_path": "src/app/integration/tutorials-list.integration.spec.ts",
+      "type": "integration",
+      "description": "Tutorials list screen with its real child drawer, real service and real interceptor: initial fetch url, populated/empty/error states, search (match, no match, empty title, verbatim query string), remove-all success and failure, and the drawer round-trips (fetch, 404, publish -> PUT -> list refetch, default confirmation on empty body, delete -> refetch -> close, backdrop close without a request)."
+    },
+    {
+      "file_path": "src/app/integration/tutorial-details.integration.spec.ts",
+      "type": "integration",
+      "description": "Edit screen as the real router activates it at /tutorials/:id: route-param driven fetch, not-yet-loaded and load-failure fallbacks, form prefill, update with edited fields, publish, failed update, delete -> redirect to /tutorials, failed delete stays put, and the read-only view mode."
+    },
+    {
+      "file_path": "src/app/integration/add-tutorial.integration.spec.ts",
+      "type": "integration",
+      "description": "Add screen with the real service and interceptor: empty first render makes no request, POST body and url, success confirmation, empty-field submit, published flag omitted on create, 400 keeps the form and the typed values, and 'Add another' clears the form."
+    },
+    {
+      "file_path": "src/app/integration/routing.integration.spec.ts",
+      "type": "integration",
+      "description": "App shell booted from the real AppModule: header/footer render, '' redirects to /tutorials, header link navigates to /add, /tutorials/:id activates the edit screen and loads that tutorial, routerLinkActive marks the current link, and an unknown url leaves the shell intact."
+    },
+    {
+      "file_path": "src/app/integration/integration-test-setup.ts",
+      "type": "integration",
+      "description": "Shared helpers for the integration specs: apiUrl() for the interceptor-prefixed url, the real HTTP_INTERCEPTORS provider exactly as AppModule registers it, and an aTutorial() factory."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "title": "Search by title does not url-encode the title, corrupting the query for titles containing & # + or spaces",
+      "description": "TutorialService.findByTitle interpolates the raw title into the query string (`${baseUrl}?title=${title}`) instead of using HttpParams or encodeURIComponent. Searching for `a&b c` sends `GET /api/tutorials?title=a&b c`, which the server parses as two parameters (`title=a` and `b c`) and which also contains a raw space in the request line. Any title containing a reserved character therefore returns the wrong results.",
+      "file": "src/app/services/tutorial.service.ts",
+      "test": "src/app/integration/tutorials-list.integration.spec.ts -> 'url-encodes a search title containing reserved characters'",
+      "evidence": "Expected 'http://localhost:5001/api/tutorials?title=a%26b%20c' but the app issues 'http://localhost:5001/api/tutorials?title=a&b c'. Test is kept and skipped with xit + a KNOWN-DEFECT comment; the sibling test 'sends a search title verbatim in the query string' documents the actual behaviour and passes.",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "Edit screen throws a TypeError when an update returns an empty body, so the user never sees the confirmation",
+      "description": "TutorialDetailsComponent.updatePublished and updateTutorial read `res.message` with no null guard. A 200/204 with an empty body is a normal REST answer to PUT, and HttpClient surfaces it as `null`, so the success handler throws `Cannot read properties of null (reading 'message')`. The confirmation banner is never shown even though the server accepted the change. The sibling TutorialDrawerComponent guards the same call correctly with `res && res.message`, which shows the omission is accidental.",
+      "file": "src/app/components/tutorial-details/tutorial-details.component.ts",
+      "test": "src/app/integration/tutorial-details.integration.spec.ts -> 'falls back to a default confirmation when the update response has no body'",
+      "evidence": "Flushing the PUT /api/tutorials/7 with `null` throws TypeError inside the next handler; `.alert-success` is never rendered. Test is kept and skipped with xit + a KNOWN-DEFECT comment. Compare tutorial-drawer.component.ts line 68 (`res && res.message`), whose equivalent integration test passes.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "Data-fetching screens show their empty/error state while the first request is still in flight",
+      "description": "The tutorials list renders the 'No tutorials yet' empty state, and the edit screen renders 'Cannot access this Tutorial...', for as long as the initial GET is pending, because both templates only branch on whether the data is present and never distinguish 'not loaded yet' from 'loaded and empty' or 'failed'. On a slow connection the user is told there is nothing there before anything has been fetched, and a failed request is indistinguishable from an empty result.",
+      "file": "src/app/components/tutorials-list/tutorials-list.component.html",
+      "test": "src/app/integration/tutorials-list.integration.spec.ts -> 'shows neither cards nor the empty state while the tutorials are loading'",
+      "evidence": "With GET /api/tutorials still pending, `.tm-empty` is already in the DOM containing 'No tutorials yet'. Test is kept and skipped with xit + a KNOWN-DEFECT comment; 'renders no tutorial cards while the first request is still in flight' and 'shows the fallback message while the tutorial has not arrived yet' document the actual behaviour and pass. Errors are only console.error'd (tutorials-list.component.ts line 29), so there is no user-visible error state either.",
+      "source": "test"
+    }
+  ],
+  "quarantined": [],
+  "self_reported": {
+    "passed": 41,
+    "failed": 0,
+    "skipped": 3
+  },
+  "report_path": ".test-gen/plan/integration.md",
+  "blockers": [
+    "Pre-existing failure on main, not introduced by this phase and not in a file this phase owns: src/app/services/tutorial.service.spec.ts 'TutorialService should be created' fails with NullInjectorError: No provider for HttpClient! because it calls TestBed.configureTestingModule({}) without HttpClientTestingModule. It is a defective test rather than an application defect; the unit phase owns that file, so it was left untouched to avoid a cross-phase conflict.",
+    "`npm run test` runs `ng test`, which defaults to a headed Chrome in watch mode; the browser and the non-watch flags can only be pinned via angular.json (an application file this phase must not modify) or a karma.conf.js referenced from it. The integration specs were therefore run with `npx ng test --watch=false --browsers=ChromeHeadless --include='**/integration/*.spec.ts'` and CHROME_BIN resolved to /usr/bin/google-chrome.",
+    "merge: .test-gen/guard.json was also changed by the unit phase; kept that version, this phase's change to it was dropped"
+  ]
+}

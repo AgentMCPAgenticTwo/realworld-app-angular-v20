@@ -1,0 +1,90 @@
+{
+  "phase": "e2e",
+  "status": "PARTIAL",
+  "summary": "Added Playwright (@playwright/test@1.63.0) with playwright.config.ts (webServer `npm run start` on 4200, chromium, retries in CI, trace retain-on-failure) and 6 specs in e2e/ covering the app's main journeys: browse/search the tutorials list (populated, empty, loading, API-error states), create a tutorial, edit/publish/unpublish/delete a tutorial, the details drawer (open, publish, delete, 404, close), routing + Remove All, and an axe accessibility smoke per key page. The tutorials API (http://localhost:5001/api) is not running in CI, so every spec stubs it with page.route via the shared helper e2e/support/api-stub.ts using the contract shape {id,title,description,published,createdAt,updatedAt}. Last run: 25 passed, 0 failed, 5 skipped. PARTIAL because 5 tests are skipped as KNOWN-DEFECTs against real app bugs: the 4 axe checks fail on every page (serious `listitem` and `color-contrast` violations) and Add Tutorial posts an empty record when the required fields are blank.",
+  "test_files": [
+    {
+      "file_path": "e2e/tutorials-list.spec.ts",
+      "type": "e2e",
+      "description": "Tutorials list: populated, empty, in-flight and 500-error states; search by title sends ?title= and filters; empty search result."
+    },
+    {
+      "file_path": "e2e/add-tutorial.spec.ts",
+      "type": "e2e",
+      "description": "Create a tutorial: success confirmation and POST payload, 'Add another' resets the form, API failure keeps the form, empty submit (skipped KNOWN-DEFECT)."
+    },
+    {
+      "file_path": "e2e/edit-tutorial.spec.ts",
+      "type": "e2e",
+      "description": "Edit screen /tutorials/:id: loads values, PUT on update, publish/unpublish toggles, delete redirects to the list, 404 and 500 show 'Cannot access this Tutorial...'."
+    },
+    {
+      "file_path": "e2e/tutorial-drawer.spec.ts",
+      "type": "e2e",
+      "description": "Details drawer from the list: open on card click, close button, publish updates status, delete closes and refreshes the list, 404 shows 'Not found'."
+    },
+    {
+      "file_path": "e2e/navigation.spec.ts",
+      "type": "e2e",
+      "description": "Routing: / redirects to /tutorials, header links, Remove All clears the collection, unknown url still renders the app chrome."
+    },
+    {
+      "file_path": "e2e/accessibility.spec.ts",
+      "type": "e2e",
+      "description": "axe-core smoke on list, add form, edit page and drawer; asserts no serious/critical violations (all 4 skipped as KNOWN-DEFECT)."
+    },
+    {
+      "file_path": "e2e/support/api-stub.ts",
+      "type": "e2e",
+      "description": "Shared page.route stub for the tutorials API plus a tutorial() factory; records the calls the UI made so specs can assert on method/url/payload."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "medium",
+      "title": "Serious accessibility violations on every page (listitem, color-contrast)",
+      "description": "axe-core reports two serious violations on every route: the header's <li> nav items are not inside a <ul>/<ol> (src/app/components/header/header.component.html uses <div class=\"navbar-nav\"> as their parent), and text in the shared chrome fails the minimum colour-contrast ratio. Both appear on the list, add, edit and drawer views.",
+      "file": "src/app/components/header/header.component.html",
+      "test": "e2e/accessibility.spec.ts -> 'the tutorials list has no serious or critical accessibility violations' (and the 3 sibling checks)",
+      "evidence": "new AxeBuilder({ page }).analyze() on /tutorials, /add, /tutorials/7 and the open drawer each return: [\"color-contrast: Elements must meet minimum color contrast ratio thresholds\", \"listitem: <li> elements must be contained in a <ul> or <ol>\"] with impact serious. Tests marked test.fixme with KNOWN-DEFECT.",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "Add Tutorial submits an empty tutorial and reports success",
+      "description": "The title and description inputs are marked `required` but there is no form validation: AddTutorialComponent.saveTutorial() POSTs {title: '', description: ''} as soon as Submit is clicked and then renders 'Tutorial was submitted successfully!'. A user can create blank records with two clicks.",
+      "file": "src/app/components/add-tutorial/add-tutorial.component.ts",
+      "test": "e2e/add-tutorial.spec.ts -> 'does not submit when the required title and description are empty'",
+      "evidence": "Clicking Submit on a pristine /add page produces one POST /api/tutorials with body {\"title\":\"\",\"description\":\"\"} and the success alert appears. Test marked test.fixme with KNOWN-DEFECT.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "List and detail screens swallow API errors with no user-visible message",
+      "description": "TutorialsListComponent.retrieveTutorials, searchTitle, removeAllTutorials and TutorialDetailsComponent.getTutorial only console.error on failure. When the API returns 500 the list silently shows the 'No tutorials yet' empty state and the edit route shows 'Cannot access this Tutorial...', so a server outage is indistinguishable from genuinely empty data.",
+      "file": "src/app/components/tutorials-list/tutorials-list.component.ts",
+      "test": "e2e/tutorials-list.spec.ts -> 'shows the empty state instead of crashing when the API fails with 500'",
+      "evidence": "With the API stubbed to 500, /tutorials renders the empty-state heading 'No tutorials yet' and no error/retry affordance. The test documents the current behaviour rather than asserting the desired one.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "No wildcard route: unknown urls render an empty main area",
+      "description": "app-routing.module.ts declares only '', 'tutorials', 'tutorials/:id' and 'add'. Navigating to an unknown path leaves the header and footer rendered with no routed content and no 404 message.",
+      "file": "src/app/app-routing.module.ts",
+      "test": "e2e/navigation.spec.ts -> 'an unknown url leaves the user on a rendered page rather than a blank screen'",
+      "evidence": "GET /no-such-page renders the navigation and footer only; no 'not found' content is shown.",
+      "source": "analysis"
+    }
+  ],
+  "quarantined": [],
+  "self_reported": {
+    "passed": 25,
+    "failed": 0,
+    "skipped": 5
+  },
+  "report_path": ".test-gen/plan/e2e.md",
+  "blockers": [
+    "merge: .test-gen/guard.json was also changed by the unit phase; kept that version, this phase's change to it was dropped"
+  ]
+}

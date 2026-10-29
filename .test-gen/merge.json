@@ -1,0 +1,21 @@
+{
+  "phases": [
+    "unit",
+    "integration",
+    "e2e"
+  ],
+  "files": 39,
+  "conflicts": [
+    {
+      "path": ".test-gen/guard.json",
+      "kept": "unit",
+      "dropped": "integration"
+    },
+    {
+      "path": ".test-gen/guard.json",
+      "kept": "unit",
+      "dropped": "e2e"
+    }
+  ],
+  "relock": false
+}

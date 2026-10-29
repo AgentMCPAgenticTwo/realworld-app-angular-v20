@@ -1,0 +1,13 @@
+Done. e2e phase complete — no application files modified (only `package.json` devDeps + a `test:e2e` script, `playwright.config.ts`, and `e2e/`).
+
+**Suite:** 6 specs in `e2e/`, 30 tests — **25 passed, 0 failed, 5 skipped** (stable across 3 runs). The tutorials API (`localhost:5001`) isn't running in CI, so every spec stubs it via `page.route` through the shared `e2e/support/api-stub.ts`, which also records the requests the UI made so assertions check real payloads, not just mock echoes.
+
+**Flows covered:** list (populated / empty / in-flight / 500) + title search; create tutorial; edit page update, publish/unpublish, delete→redirect, 404/500; details drawer open/publish/delete/404/close; routing + Remove All; axe smoke per page.
+
+**Findings (4, all kept as truthful red/skipped tests):**
+- *medium* — serious axe violations on **every** page: `listitem` (`<li>` nav items outside a `<ul>` in `header.component.html`) and `color-contrast`. All 4 a11y checks are `test.fixme` + `KNOWN-DEFECT`.
+- *medium* — Add Tutorial POSTs `{title:"",description:""}` on an empty form and shows "submitted successfully"; `required` is decorative, there's no validation.
+- *low* — API errors are swallowed (`console.error` only): a 500 renders the same "No tutorials yet" empty state as genuinely empty data.
+- *low* — no wildcard route; unknown URLs render chrome with an empty main area.
+
+Status reported as **PARTIAL** precisely because those 5 tests are skipped against real defects rather than passing. Output at `.test-gen/outputs/03-e2e.json`, plan at `.test-gen/plan/e2e.md`.

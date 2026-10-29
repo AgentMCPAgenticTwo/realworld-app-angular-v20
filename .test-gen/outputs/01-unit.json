@@ -1,0 +1,74 @@
+{
+  "phase": "unit",
+  "status": "SUCCESS",
+  "summary": "Added 64 Karma/Jasmine unit specs (89 total in the suite, all green, two consecutive runs) covering the riskiest logic: TutorialService's seven HTTP methods, ApiInterceptor url rewriting, and the branching in the add/details/drawer/list components. Used the repo's existing conventions (TestBed + HttpClientTestingModule as the only mocked boundary, no new runner or dependency). Line coverage measured with the repo's karma-coverage at 99.21% (126/127 lines, 94.44% branches), well above the 70% target. The baseline run had one pre-existing failure (TutorialService should be created) caused by the spec itself configuring an empty TestBed with no HttpClient provider; that spec is a test file, so it was rewritten rather than the app being changed, and the cause is reported as an analysis finding. One low-severity application defect (unencoded search term) and one medium-severity one (create form submits blank required fields) are documented by passing characterization tests marked KNOWN-DEFECT.",
+  "test_files": [
+    {
+      "file_path": "src/app/services/tutorial.service.spec.ts",
+      "type": "unit",
+      "description": "Rewritten from a broken one-line smoke test: verb/url/body for getAll, get, create, update, delete, deleteAll, findByTitle, plus empty list, 404, 400 and 500 error propagation, lazy subscription and unencoded search terms."
+    },
+    {
+      "file_path": "src/app/interceptors/api.interceptor.url.spec.ts",
+      "type": "unit",
+      "description": "Url-rewriting branches: missing/present leading slash, empty url, http and uppercase HTTPS absolute urls left untouched, protocol-relative urls, method/body/header preservation."
+    },
+    {
+      "file_path": "src/app/components/tutorial-details/tutorial-details.behaviour.spec.ts",
+      "type": "unit",
+      "description": "viewMode vs edit mode, route-driven load, publish/unpublish with server-supplied and default messages, update, delete-then-navigate, and the error paths for each."
+    },
+    {
+      "file_path": "src/app/components/tutorial-drawer/tutorial-drawer.behaviour.spec.ts",
+      "type": "unit",
+      "description": "open boundary (null, undefined, id 0), state reset between ids, 404 vs 500 branches, unpublish, delete, and that failures emit neither changed nor closed."
+    },
+    {
+      "file_path": "src/app/components/add-tutorial/add-tutorial.behaviour.spec.ts",
+      "type": "unit",
+      "description": "POST body shape (published dropped), success state only after the api confirms, 400 keeps the form, blank required fields, form reset, and typing through ngModel."
+    },
+    {
+      "file_path": "src/app/components/tutorials-list/tutorials-list.behaviour.spec.ts",
+      "type": "unit",
+      "description": "Loading, populated, empty and error states; search replaces the list and clears the selection; remove-all refresh and its failure path; drawer changed event reloads the list."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "medium",
+      "title": "Add Tutorial posts blank title and description despite the fields being marked required",
+      "description": "add-tutorial.component.html marks #title and #description as `required`, but AddTutorialComponent.saveTutorial() performs no validation and the Submit button is never disabled, so clicking Submit on an untouched form sends {title: '', description: ''} to the api. The user only learns it was rejected if the backend happens to return an error, which is swallowed by console.error.",
+      "file": "src/app/components/add-tutorial/add-tutorial.component.ts",
+      "test": "src/app/components/add-tutorial/add-tutorial.behaviour.spec.ts :: sends an empty payload when the required fields are blank",
+      "evidence": "The characterization test asserts req.request.body equals {title: '', description: ''} after clicking Submit with no input. It passes, documenting the defect.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "TutorialService.findByTitle does not url-encode the search term",
+      "description": "findByTitle builds the url by string interpolation (`${baseUrl}?title=${title}`). A term containing '&', '=', '#' or a space is sent raw, so 'a&published=true' reaches the api as two query parameters and the title filter is silently truncated to 'a'. encodeURIComponent, or HttpParams, would fix it.",
+      "file": "src/app/services/tutorial.service.ts",
+      "test": "src/app/services/tutorial.service.spec.ts :: does not encode a search term containing an ampersand",
+      "evidence": "The request url observed by HttpTestingController is exactly '/tutorials?title=a&published=true' — the ampersand is not escaped.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "Pre-existing failing spec: TutorialService should be created",
+      "description": "Before this phase, `npm run test` reported 26 specs, 1 FAILED. src/app/services/tutorial.service.spec.ts called TestBed.configureTestingModule({}) with no HttpClient provider, so injecting TutorialService threw NullInjectorError: No provider for HttpClient. This is a defect in the test, not in the application, so the spec was rewritten (test files are in scope for this agent) and the suite is now green.",
+      "file": "src/app/services/tutorial.service.spec.ts",
+      "test": "TutorialService should be created (baseline)",
+      "evidence": "Baseline `npx ng test --watch=false --browsers=ChromeHeadless`: 'TOTAL: 1 FAILED, 25 SUCCESS', with NullInjectorError raised from R3Injector.hydrate.",
+      "source": "analysis"
+    }
+  ],
+  "quarantined": [],
+  "self_reported": {
+    "passed": 89,
+    "failed": 0,
+    "skipped": 0
+  },
+  "report_path": ".test-gen/plan/unit.md",
+  "blockers": []
+}

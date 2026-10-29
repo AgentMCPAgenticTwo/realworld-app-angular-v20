@@ -1,0 +1,13 @@
+Done. Unit phase complete.
+
+**What I did**
+- Baseline `npm run test`: **26 specs, 1 pre-existing failure** — `TutorialService should be created` (the spec configured an empty TestBed, so `HttpClient` had no provider). Test-side defect; reported as an `analysis` finding and the spec rewritten (test files are in scope).
+- Wrote a risk-ranked plan at `.test-gen/plan/unit.md`, then 6 spec files following the repo's existing convention (TestBed + `HttpClientTestingModule` as the only mocked boundary). No new runner or dependency was needed — karma/jasmine/karma-coverage were already present.
+
+**Result:** 89 specs, all green on two consecutive runs. Coverage via the repo's own karma-coverage: **99.21% lines (126/127), 94.44% branches** — target was 70%.
+
+**Findings (application defects, left documented by passing characterization tests marked `KNOWN-DEFECT`):**
+- *medium* — `AddTutorialComponent.saveTutorial()` POSTs `{title: '', description: ''}` on an untouched form; the template's `required` attributes are decorative, there's no guard and no disabled button.
+- *low* — `TutorialService.findByTitle` interpolates the term into the url unencoded, so `a&published=true` reaches the API as two query params and the title filter is silently truncated.
+
+`git status` confirms only test files were added/changed — no application source, build config, or CI touched.

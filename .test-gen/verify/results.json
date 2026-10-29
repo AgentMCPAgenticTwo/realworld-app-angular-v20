@@ -1,0 +1,49 @@
+{
+  "suites": {
+    "unit": {
+      "status": "error",
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "detail": "Y\\n[3098:3098:1029/114209.975806:ERROR:ui/aura/env.cc:253] The platform failed to initialize.  Exiting.\\n[3098:3125:1029/114209.977059:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are \"tcp\" and on UNIX \"unix\")\\n\\n29 10 2026 11:42:09.983:ERROR [launcher]: Chrome stdout: \\n29 10 2026 11:42:09.983:ERROR [launcher]: "
+    },
+    "integration": {
+      "status": "not_run",
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "detail": ""
+    },
+    "e2e": {
+      "status": "passed",
+      "passed": 25,
+      "failed": 0,
+      "skipped": 5,
+      "duration_ms": 20627,
+      "detail": ""
+    }
+  },
+  "coverage": null,
+  "commands": [
+    {
+      "label": "unit",
+      "cmd": "npm run test",
+      "cwd": ".",
+      "exit_code": 124,
+      "duration_ms": 1500037,
+      "log": ".test-gen/verify/raw/unit.log"
+    },
+    {
+      "label": "e2e",
+      "cmd": "npx playwright test --reporter=json,html",
+      "cwd": ".",
+      "exit_code": 0,
+      "duration_ms": 21578,
+      "log": ".test-gen/verify/raw/e2e.log"
+    }
+  ],
+  "notes": [],
+  "verified": true
+}
