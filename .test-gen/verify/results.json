@@ -1,0 +1,49 @@
+{
+  "suites": {
+    "unit": {
+      "status": "error",
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "detail": "ng X server or $DISPLAY\\n[2735:2735:1029/100701.765055:ERROR:ui/aura/env.cc:253] The platform failed to initialize.  Exiting.\\n\\n29 10 2026 10:07:01.810:INFO [launcher]: Trying to start Chrome again (1/2).\\n29 10 2026 10:07:01.916:ERROR [launcher]: Cannot start Chrome\\n\\t[2769:2769:1029/100701.911521:ERROR:ui/ozone/platform/x11/ozone_platform_x11.cc:257] Missing X server or $DISPLAY\\n[2769:2769:10"
+    },
+    "integration": {
+      "status": "not_run",
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "detail": ""
+    },
+    "e2e": {
+      "status": "passed",
+      "passed": 29,
+      "failed": 0,
+      "skipped": 7,
+      "duration_ms": 17001,
+      "detail": ""
+    }
+  },
+  "coverage": null,
+  "commands": [
+    {
+      "label": "unit",
+      "cmd": "npm run test",
+      "cwd": ".",
+      "exit_code": 124,
+      "duration_ms": 1500100,
+      "log": ".test-gen/verify/raw/unit.log"
+    },
+    {
+      "label": "e2e",
+      "cmd": "npx playwright test --reporter=json,html",
+      "cwd": ".",
+      "exit_code": 0,
+      "duration_ms": 17691,
+      "log": ".test-gen/verify/raw/e2e.log"
+    }
+  ],
+  "notes": [],
+  "verified": true
+}

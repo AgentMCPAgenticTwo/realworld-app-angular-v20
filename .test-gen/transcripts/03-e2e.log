@@ -1,0 +1,17 @@
+e2e phase done.
+
+**What I added** (no application code touched — only `e2e/`, `playwright.config.ts`, and the devDeps/`test:e2e` script in `package.json`):
+
+- `@playwright/test@1.63.0` + `@axe-core/playwright@4.13.0`, `playwright.config.ts` (chromium, `webServer: npm run start` on 4200, `reuseExistingServer`, `retries: CI?1:0`, retain-on-failure traces).
+- `e2e/support/api-stub.ts` — shared `page.route` stub for the unavailable backend (`localhost:5001/api`), using the contract shapes from `TutorialService`/`Tutorial`, and recording the calls the UI actually made so specs assert method/url/payload.
+- 6 specs: tutorials list (populated/empty/500/search/Remove All ±failure), add tutorial, details drawer (publish/unpublish/delete/404/close/edit-nav), edit page at `/tutorials/:id`, the health-footer story, and axe smokes.
+
+**Last run: 29 passed, 0 failed, 7 skipped** — stable across 3 runs.
+
+**Findings** (kept as failing/`fixme` tests, not fixed):
+1. **high** — `GET /api/health` and the footer `API: ok` indicator are not implemented at all; `app.component.html` renders only the static footer, no health request is ever made.
+2. **medium** — Add Tutorial has no validation: an empty submit POSTs `{title:"",description:""}` and shows "submitted successfully".
+3. **medium** — serious axe violations on every page (`color-contrast` on `.app-footer-note`/`.tm-subtitle`/`.badge-primary`; `listitem` — header `<li>`s outside a `<ul>`).
+4. **low** — API failures are only `console.error`'d; a failed load renders the empty state, failed mutations do nothing visible.
+
+Status reported as `PARTIAL` in `.test-gen/outputs/03-e2e.json` precisely because of 1–3; plan is at `.test-gen/plan/e2e.md`.
