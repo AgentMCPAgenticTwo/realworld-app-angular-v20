@@ -1,5 +1,13 @@
 # Knowledge Update Log
 
+## 2026-10-29
+
+* **No-op**: Reviewed `.github/workflows/ui-correction.yml` (trace `64210de57ca7`,
+  commit `1803c7709b17ec9a42b0ab572bb3c907c94a9f36`) after a runtime re-stamp
+  (effort level and `--model` values only). The file is CI tooling, not
+  application source, and `reference/graph-queries.md` already documents it as a
+  non-source contributor to the graph; no concept content changed.
+
 ## 2026-10-28
 
 * **Creation**: Added `modules/components-header.md` for the new `HeaderComponent`
