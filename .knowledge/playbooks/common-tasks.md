@@ -4,10 +4,10 @@ title: Common tasks
 description: Where to go to change routes, API calls, the data model, the styling or the detail drawer.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [playbook, howto]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T09:53:52Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 9b034fe57d550b8f66d54b93e29362baf23c00ae
     title: Codebase knowledge graph
 status: stable
 ---
@@ -15,7 +15,8 @@ status: stable
 # Point the app at a different backend
 
 Edit `apiUrl` in `src/environments/environment.ts`. Do not touch `baseUrl` in
-`src/app/services/tutorial.service.ts` — it is intentionally relative. See
+`src/app/services/tutorial.service.ts` or `src/app/services/health.service.ts` —
+both are intentionally relative. See
 [environments](/modules/environments.md) and
 [interceptors](/modules/interceptors.md).
 
@@ -86,6 +87,18 @@ additionally emits `changed` so the list refreshes, and handles HTTP 404 via
 `notFound`. See
 [tutorial-details](/modules/components-tutorial-details.md) and
 [tutorial-drawer](/modules/components-tutorial-drawer.md).
+
+# Change the footer API health indicator
+
+1. The probe lives in `AppComponent.ngOnInit` (`src/app/app.component.ts:15`) and
+   calls `HealthService.get()` from `src/app/services/health.service.ts`.
+2. The displayed text is `.app-footer-health` in `src/app/app.component.html`;
+   its styling is `.app-footer-health` in `src/app/app.component.css`.
+3. Widen `Health` in `src/app/models/health.model.ts` to surface more fields.
+4. Any new spec that creates `AppComponent` must import `HttpClientTestingModule`
+   and flush the `/health` request, as `app.component.spec.ts` does.
+
+See [the shell module](/modules/app-shell.md) and [services](/modules/services.md).
 
 # Change what opens the drawer
 

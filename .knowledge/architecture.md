@@ -1,13 +1,13 @@
 ---
 type: Architecture
 title: Application architecture
-description: Module-based Angular app layered as routed components, a single HTTP service and a URL-rewriting interceptor.
+description: Module-based Angular app layered as routed components, HTTP services and a URL-rewriting interceptor.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [architecture, angular, layers]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T09:53:52Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 9b034fe57d550b8f66d54b93e29362baf23c00ae
     title: Codebase knowledge graph
 status: stable
 ---
@@ -16,16 +16,17 @@ status: stable
 
 | Layer | Location | Responsibility |
 | --- | --- | --- |
-| Shell | `src/app/app.component.ts`, `src/app/app.module.ts`, `src/app/app-routing.module.ts` | Bootstrap, page layout (header/main/footer), route table, DI providers |
+| Shell | `src/app/app.component.ts`, `src/app/app.module.ts`, `src/app/app-routing.module.ts` | Bootstrap, page layout (header/main/footer), footer health probe, route table, DI providers |
 | Presentation | `src/app/components/` | Five components; all state is component-local |
 | Styling | `src/styles.css`, `src/index.html`, per-component `.css` | `--tm-*` tokens and shared `tm-*` classes; no component defines its own colours |
-| Data access | `src/app/services/tutorial.service.ts` | The only place `HttpClient` is used |
+| Data access | `src/app/services/tutorial.service.ts`, `src/app/services/health.service.ts` | The only places `HttpClient` is used |
 | Cross-cutting | `src/app/interceptors/api.interceptor.ts` | Prefixes relative URLs with `environment.apiUrl` |
-| Model | `src/app/models/tutorial.model.ts` | `Tutorial` shape shared by every component |
+| Model | `src/app/models/tutorial.model.ts`, `src/app/models/health.model.ts` | `Tutorial` and `Health` shapes |
 | Config | `src/environments/environment.ts` | `production`, `apiUrl` |
 
 The dependency direction is strictly presentation → service → interceptor → HTTP.
-No component imports `HttpClient` directly.
+No component imports `HttpClient` directly. `AppComponent` is the one shell-layer
+class that reaches into the data-access layer, via `HealthService`.
 
 # Routes
 
@@ -49,7 +50,7 @@ AppComponent (app-root)              .app-shell
         TutorialDrawerComponent     child, driven by @Input tutorialId
       TutorialDetailsComponent      route 'tutorials/:id'
       AddTutorialComponent          route 'add'
-  footer.app-footer
+  footer.app-footer                  .app-footer-health shows AppComponent.apiStatus
 ```
 
 [HeaderComponent](/modules/components-header.md) is purely presentational and holds
@@ -69,15 +70,20 @@ flex layout only.
 | `TutorialDetailsComponent.getTutorial` | 1 | `ngOnInit` |
 | `TutorialDrawerComponent.getTutorial` | 1 | `ngOnChanges` |
 | `TutorialDrawerComponent.close` | 1 | `deleteTutorial` |
+| `HealthService.get` | 1 | `AppComponent.ngOnInit` |
 
-Every service method is invoked from component methods only; the graph records a
-single outbound `HTTP_CALLS` edge for the app's REST surface.
+Every service method is invoked from component methods only.
 
 # Boundaries
 
-* **Network boundary** — `src/app/services/tutorial.service.ts` is the single egress
-  point. Changing the backend means changing `baseUrl` there or `apiUrl` in
+* **Network boundary** — `src/app/services/tutorial.service.ts` and
+  `src/app/services/health.service.ts` are the egress points. Changing the backend
+  means changing `baseUrl` in those files or `apiUrl` in
   `src/environments/environment.ts`.
+* **Health probe** — `AppComponent.ngOnInit` fires one `GET /health` per app load
+  and degrades to `apiStatus = 'unavailable'` on error, so a missing `/health`
+  endpoint never breaks the shell. Any `TestBed` that declares `AppComponent` must
+  therefore provide `HttpClientTestingModule`.
 * **Absolute-URL escape hatch** — `ApiInterceptor.intercept` leaves any request whose
   URL already matches `^https?://` untouched.
 * **Two detail surfaces** — `TutorialDetailsComponent` (route) and

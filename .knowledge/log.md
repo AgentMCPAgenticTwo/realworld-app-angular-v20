@@ -1,5 +1,23 @@
 # Knowledge Update Log
 
+## 2026-10-29
+
+* **Update**: `modules/services.md` — documented the new `HealthService`
+  (`src/app/services/health.service.ts`, `GET /health`) alongside `TutorialService`;
+  the services directory now holds two HTTP clients (trace `078f168c6d46`, commit
+  `9b034fe57d550b8f66d54b93e29362baf23c00ae`).
+* **Update**: `modules/models.md` — added the `Health` shape
+  (`src/app/models/health.model.ts`).
+* **Update**: `modules/app-shell.md` — new **API health indicator** section:
+  `AppComponent.apiStatus`, the `ngOnInit` probe and its `unknown` / `unavailable`
+  outcomes, the `.app-footer-health` markup and style, and the
+  `HttpClientTestingModule` requirement for specs.
+* **Update**: `architecture.md` (data-access and model layers now list two files,
+  health-probe boundary, `HealthService.get` hotspot, render tree footer note),
+  `overview.md` (entry-point and backend-contract rows),
+  `playbooks/common-tasks.md` (new "Change the footer API health indicator" task),
+  `modules/index.md` and `index.md`.
+
 ## 2026-10-28
 
 * **Creation**: Added `modules/components-header.md` for the new `HeaderComponent`

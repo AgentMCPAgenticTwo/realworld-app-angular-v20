@@ -5,7 +5,7 @@ okf_version: "0.2"
 # realworld-app-angular-v20
 
 * [Codebase Overview](/overview.md) - Angular 17 CRUD single-page app for managing tutorials against a REST backend.
-* [Architecture](/architecture.md) - Module-based Angular app layered as routed components, a single HTTP service and a URL-rewriting interceptor.
+* [Architecture](/architecture.md) - Module-based Angular app layered as routed components, HTTP services and a URL-rewriting interceptor.
 * [Conventions](/conventions.md) - Naming, file-layout, styling, template and HTTP-subscription conventions used throughout the app.
 
 # Modules
