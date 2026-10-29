@@ -1,0 +1,90 @@
+{
+  "phase": "e2e",
+  "status": "PARTIAL",
+  "summary": "Added Playwright 1.63.0 (+ @axe-core/playwright 4.13.0), playwright.config.ts (webServer `npm run start` on 4200, reuseExistingServer, chromium only, retain-on-failure traces) and 6 spec files under e2e/ covering the app's five primary journeys: browse the tutorials list, search by title, add a tutorial, publish/unpublish/delete via the details drawer, and edit a tutorial at /tutorials/:id — each with populated, empty, error and not-found states. The backend (http://localhost:5001/api) is not running in CI, so every spec stubs it with page.route using the contract shapes from TutorialService/Tutorial, and the specs assert on the requests the UI actually sent (method, url, payload) as well as on rendered output. Last local run: 29 passed, 0 failed, 7 skipped (stable across 3 runs). PARTIAL because three real application defects are left as failing/`fixme` tests rather than papered over: the /api/health + footer \"API: ok\" story is not implemented at all, the Add Tutorial form performs no validation, and every page has serious axe violations. Line coverage is not measured for e2e; the flows above exercise all 4 routes and all 5 components.",
+  "test_files": [
+    {
+      "file_path": "e2e/tutorials-list.spec.ts",
+      "type": "e2e",
+      "description": "Tutorials list: populated/empty/API-error states, search by title (match and no match), Remove All success and failure."
+    },
+    {
+      "file_path": "e2e/add-tutorial.spec.ts",
+      "type": "e2e",
+      "description": "Add Tutorial: successful POST with the typed payload, Add another resets the form, API rejection shows no success, and the missing-validation defect (one fixme + one test documenting current behaviour)."
+    },
+    {
+      "file_path": "e2e/tutorial-drawer.spec.ts",
+      "type": "e2e",
+      "description": "Details drawer: opens with the clicked tutorial, 404 shows Not found, publish/unpublish send the right PUT, delete closes and refreshes, failed delete keeps the drawer, close button, Edit navigation."
+    },
+    {
+      "file_path": "e2e/edit-tutorial.spec.ts",
+      "type": "e2e",
+      "description": "Edit page at /tutorials/:id: loads by route id, Update sends edited fields and confirms, failed update shows no confirmation, UnPublish flips the pill, Delete returns to the list, unknown id shows the fallback."
+    },
+    {
+      "file_path": "e2e/health-footer.spec.ts",
+      "type": "e2e",
+      "description": "The GET /api/health + footer \"API: ok\" story: two fixme tests for the intended behaviour plus one passing test documenting that the footer renders no API status."
+    },
+    {
+      "file_path": "e2e/accessibility.spec.ts",
+      "type": "e2e",
+      "description": "Axe smoke per key page and for the open drawer: serious+critical checks kept as fixme KNOWN-DEFECT, critical-only checks run as regression guards."
+    },
+    {
+      "file_path": "e2e/support/api-stub.ts",
+      "type": "e2e",
+      "description": "Shared page.route backend stub (list/detail/404/write-error variants) returning contract response shapes and recording the calls the app made."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "title": "GET /api/health and the footer \"API: ok\" indicator are not implemented",
+      "description": "The requested story is absent from the app: nothing requests /api/health, and src/app/app.component.html renders only \"© Tutorial Manager\" and \"Built with Angular\" in the footer. There is no health check, no status text and no failure state.",
+      "file": "src/app/app.component.html",
+      "test": "e2e/health-footer.spec.ts :: shows \"API: ok\" in the footer when the health endpoint reports ok",
+      "evidence": "With GET **/api/health stubbed to 200 {\"status\":\"ok\"}, expect(page.getByRole('contentinfo')).toContainText('API: ok') fails — the footer text is \"© Tutorial Manager Built with Angular\". No /api/health request appears in the network log. Reproduced 3/3 runs and confirmed in the live browser at http://localhost:4200/tutorials.",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "Add Tutorial submits an empty form with no validation and reports success",
+      "description": "The title and description inputs carry `required`, but the component is not inside a <form> with Angular validation and saveTutorial() never checks the values. Clicking Submit on an untouched form POSTs {\"title\":\"\",\"description\":\"\"} and, on a 200, shows \"Tutorial was submitted successfully!\" — so a user can create blank tutorials whenever the API accepts them.",
+      "file": "src/app/components/add-tutorial/add-tutorial.component.ts",
+      "test": "e2e/add-tutorial.spec.ts :: does not submit an empty form and reports a validation error (fixme)",
+      "evidence": "Empty submit records a POST with body {\"title\":\"\",\"description\":\"\"} in the page.route call log and the success alert becomes visible; the intended-behaviour test asserting zero POSTs fails 3/3 runs. Current behaviour is pinned by the passing test \"empty submit currently POSTs an empty tutorial and shows success\".",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "Serious accessibility violations on every page (colour contrast, <li> outside a list)",
+      "description": "Axe reports `serious` violations on all key pages: insufficient colour contrast on .app-footer-note, .tm-subtitle and .badge-primary, and `listitem` because the header nav renders <li> elements directly inside <div class=\"navbar-nav\"> with no <ul>/<ol> parent. Per the org standard, serious/critical violations are findings.",
+      "file": "src/app/components/header/header.component.html",
+      "test": "e2e/accessibility.spec.ts :: the tutorials list page has no serious or critical accessibility violations (fixme)",
+      "evidence": "AxeBuilder().analyze() on /tutorials, /add, /tutorials/1 and the open drawer: \"serious: color-contrast [.tm-subtitle | .badge-primary | .app-footer-note]\" and \"serious: listitem — <li> elements must be contained in a <ul> or <ol> [li:nth-child(1) | li:nth-child(2)]\". Reproduced 3/3 runs. Also non-blocking: moderate page-has-heading-one, minor aria-allowed-role.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "Failed API requests are only logged to the console — the UI shows no error state",
+      "description": "Every subscriber in TutorialsListComponent, AddTutorialComponent and TutorialDetailsComponent handles errors with console.error only. A failed GET /tutorials leaves `tutorials` undefined, so the user sees the \"No tutorials yet\" empty state instead of an error; a failed Remove All, Update or Delete silently does nothing.",
+      "file": "src/app/components/tutorials-list/tutorials-list.component.ts",
+      "test": "e2e/tutorials-list.spec.ts :: shows the empty state when the tutorials request fails",
+      "evidence": "With GET /api/tutorials stubbed to 500 the page renders the \"No tutorials yet\" heading and no alert; the browser console shows the HttpErrorResponse. The test asserts this current behaviour rather than the desired error banner, so the gap is documented instead of hidden.",
+      "source": "test"
+    }
+  ],
+  "quarantined": [],
+  "self_reported": {
+    "passed": 29,
+    "failed": 0,
+    "skipped": 7
+  },
+  "report_path": ".test-gen/plan/e2e.md",
+  "blockers": [
+    "merge: .test-gen/guard.json was also changed by the unit phase; kept that version, this phase's change to it was dropped"
+  ]
+}

@@ -1,0 +1,15 @@
+Unit phase done.
+
+**Result: 95 passing, 0 failing, 2 skipped (KNOWN-DEFECT), 100% line coverage (127/127), 100% branch (18/18).** Only `*.spec.ts` files touched — no application code modified.
+
+What I did:
+- **Baseline run** showed `1 FAILED, 25 SUCCESS` — `tutorial.service.spec.ts` injected `TutorialService` without `HttpClientTestingModule` (broken test, fixed in place per §5), plus three assertion-free `ApiInterceptor` specs (Karma warned "has no expectations").
+- **Rewrote** `tutorial.service.spec.ts` (verbs/urls/bodies, 400/404/500 paths, empty-collection, id `0`, empty search, lazy-observable) and `api.interceptor.spec.ts` (real assertions + leading-slash, empty path, absolute `http`/`https` passthrough, header/body preservation, error propagation).
+- **Added** four `*.behaviour.spec.ts` files for the drawer, details, list and add components, covering `ngOnChanges` state resets, `open` boundaries (`0`, `''`), 404-vs-500 branches, message fallbacks, payload shapes and `router.navigate` on delete.
+
+Findings reported (3 app-level, 2 analysis):
+1. **high** — the `/api/health` + "API: ok" footer story is unimplemented; nothing in `src/` references health, and `app.component.html:8-13` has no status element.
+2. **medium** — `tutorial-details.component.ts:58,74` read `res.message` with no null guard (the drawer guards with `res && res.message`); an empty 200/204 throws, so the published flag and confirmation never update. Kept as a skipped red spec.
+3. **low** — `tutorial.service.ts:40` interpolates the raw search term, so `'ng & forms'` produces a mis-parsed query string. Kept as a skipped red spec.
+
+Output written to `.test-gen/outputs/01-unit.json`, plan at `.test-gen/plan/unit.md`.

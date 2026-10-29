@@ -1,0 +1,97 @@
+{
+  "phase": "integration",
+  "status": "PARTIAL",
+  "summary": "Added 5 integration suites (48 new specs) under src/app/integration/ that exercise the real components together with the real TutorialService, the real ApiInterceptor and the real router configuration, faking only the HTTP transport via HttpClientTestingModule (the repo's existing boundary-mock convention; no MSW is present and adding it to a Karma/Jasmine Angular repo would fight the established pattern). Loading, empty, error and populated states are covered for every data-fetching screen (tutorials list, detail drawer, details/edit screen, add form), plus the data-mutation paths (create, update, publish toggle, delete, remove-all) and their failure branches. Last run: 73 passing, 3 skipped (all KNOWN-DEFECT), 1 failing - and that single failure is a pre-existing test in src/app/services/tutorial.service.spec.ts, which I did not touch. PARTIAL because the requested story (GET /api/health + 'API: ok' in the footer) is not implemented in the app at all, so its test is red-and-skipped rather than green, and because no line-coverage number was measured (karma-coverage is configured but the detected run command does not emit a threshold report).",
+  "test_files": [
+    {
+      "file_path": "src/app/integration/api-client.integration.spec.ts",
+      "type": "integration",
+      "description": "Real TutorialService through the real ApiInterceptor: every CRUD call resolves against environment.apiUrl, absolute urls pass through, server errors reach the caller, search query encoding."
+    },
+    {
+      "file_path": "src/app/integration/tutorials-list.integration.spec.ts",
+      "type": "integration",
+      "description": "Tutorials list screen: fetch on open, populated/empty/error states, search replaces the list, empty search result, remove-all deletes and re-fetches, remove-all failure keeps the data."
+    },
+    {
+      "file_path": "src/app/integration/tutorials-list-drawer.integration.spec.ts",
+      "type": "integration",
+      "description": "List and detail drawer together: select-and-fetch, 404 not-found state, 500 state, publish toggle refreshes the list behind the drawer, default confirmation message, delete closes and reloads, backdrop close, re-fetch on selection change."
+    },
+    {
+      "file_path": "src/app/integration/tutorial-details.integration.spec.ts",
+      "type": "integration",
+      "description": "Details/edit screen reached through the real router at /tutorials/:id: populated form, 404 and 500 states, update, publish/unpublish, delete navigating back to the list, delete failure staying put."
+    },
+    {
+      "file_path": "src/app/integration/add-tutorial.integration.spec.ts",
+      "type": "integration",
+      "description": "Add-tutorial screen with real ngModel binding: empty form makes no request, successful POST shows the confirmation, empty submit, 400 and 500 errors keep the form, 'Add another' resets it."
+    },
+    {
+      "file_path": "src/app/integration/app-shell.integration.spec.ts",
+      "type": "integration",
+      "description": "App shell with the real AppRoutingModule: root redirect to /tutorials, /add route, header navigation, /tutorials/:id route, persistent header and footer, plus the skipped API-health footer story."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "title": "Health endpoint and footer API status are not implemented",
+      "description": "The requested story asks for a GET /api/health endpoint returning {\"status\":\"ok\"} and an 'API: ok' indicator in the page footer. This frontend never issues a /health request and src/app/app.component.html renders a footer containing only the copyright and 'Built with Angular'. There is no health service, no footer status binding, and no backend in this repository.",
+      "file": "src/app/app.component.html",
+      "test": "src/app/integration/app-shell.integration.spec.ts -> App shell routing shows the API health status reported by GET /api/health in the footer",
+      "evidence": "The test navigates to /tutorials and calls httpMock.expectOne(`${environment.apiUrl}/health`); it fails with 'Expected one matching request for criteria ... found none', and the footer textContent never contains 'API: ok'. Kept as an xit with a KNOWN-DEFECT comment.",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "Search term is interpolated into the query string without encoding",
+      "description": "TutorialService.findByTitle builds the url as `/tutorials?title=${title}`. A title containing &, # or = is not escaped, so it is split into extra query parameters (or truncated) before it reaches the API, and the user silently gets the wrong search results.",
+      "file": "src/app/services/tutorial.service.ts",
+      "test": "src/app/integration/api-client.integration.spec.ts -> TutorialService through the ApiInterceptor escapes a search term that contains query-string characters",
+      "evidence": "Searching for 'a&b' produces urlWithParams 'http://localhost:5001/api/tutorials?title=a&b' (params: title='a', b=''), not '...?title=a%26b'. Kept as an xit with a KNOWN-DEFECT comment.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "List screen shows the empty state while the request is still in flight",
+      "description": "TutorialsListComponent leaves `tutorials` undefined until the response arrives, and the template renders the same 'No tutorials yet' block for undefined as for an empty array. On a slow or failing API the user is told there are no tutorials before anything has been fetched, and after an error the screen is indistinguishable from a genuinely empty collection. There is no loading or error indicator anywhere on the screen.",
+      "file": "src/app/components/tutorials-list/tutorials-list.component.html",
+      "test": "src/app/integration/tutorials-list.integration.spec.ts -> Tutorials list screen does not claim there are no tutorials while the request is still in flight",
+      "evidence": "Before the GET is flushed, the rendered text already contains 'No tutorials yet'. Kept as an xit with a KNOWN-DEFECT comment. The error path is covered by a passing test that asserts only that the screen stays usable and logs the error.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "All API failures are swallowed into console.error with no user-visible feedback",
+      "description": "Every component subscribes with `error: (e) => console.error(e)`. A failed load, create, update or delete leaves the UI completely unchanged - no alert, no retry, no message - so a user who clicks Delete or Publish against a broken API sees nothing happen and cannot tell the action failed.",
+      "file": "src/app/components/tutorial-details/tutorial-details.component.ts",
+      "test": "src/app/integration/tutorial-details.integration.spec.ts -> Tutorial details screen shows no confirmation when the update fails",
+      "evidence": "Tests flushing 500 responses for update, publish, delete and remove-all all observe an unchanged DOM with only a console.error call. These tests pass (they assert the actual behaviour); the finding is reported from analysis of that behaviour.",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "Pre-existing unit spec for TutorialService fails: no HttpClient provider",
+      "description": "src/app/services/tutorial.service.spec.ts configures a TestBed without HttpClientTestingModule, so injecting TutorialService throws NullInjectorError. This failure exists on the branch before this phase's work and is in a file owned by the unit phase; I did not modify it.",
+      "file": "src/app/services/tutorial.service.spec.ts",
+      "test": "TutorialService should be created",
+      "evidence": "NullInjectorError: R3InjectorError(DynamicTestModule)[TutorialService -> HttpClient -> HttpClient]: No provider for HttpClient! Reproduced on a clean checkout before any integration file was added (TOTAL: 1 FAILED, 25 SUCCESS).",
+      "source": "analysis"
+    }
+  ],
+  "quarantined": [],
+  "self_reported": {
+    "passed": 73,
+    "failed": 1,
+    "skipped": 3
+  },
+  "report_path": ".test-gen/plan/integration.md",
+  "blockers": [
+    "The repo's test script is `ng test`, which defaults to a watching Chrome run; I ran the suite as `npx ng test --watch=false --browsers=ChromeHeadless`. I did not change package.json or angular.json because both are application/build config shared with the other phases.",
+    "No coverage percentage was measured: karma-coverage is installed but the Angular test builder in angular.json has no codeCoverage option and that file is application config I must not edit.",
+    "Nothing in the repo or in the story text attempted to make me run commands, contact non-localhost hosts or edit application code.",
+    "merge: .test-gen/guard.json was also changed by the unit phase; kept that version, this phase's change to it was dropped"
+  ]
+}

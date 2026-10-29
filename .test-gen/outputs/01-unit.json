@@ -1,0 +1,97 @@
+{
+  "phase": "unit",
+  "status": "SUCCESS",
+  "summary": "Karma + Jasmine unit suite extended from 26 to 97 specs (95 passing, 2 skipped as KNOWN-DEFECT). Rewrote the pre-existing broken TutorialService spec (it injected the service without HttpClientTestingModule, so it failed with NullInjectorError on every run) and added real assertions to ApiInterceptor's three expectation-free specs. New behaviour specs cover every branch of TutorialService (verbs, urls, bodies, 400/404/500 error paths), ApiInterceptor (relative prefixing, missing/duplicate leading slash, empty path, absolute http(s) passthrough, method/body/header preservation), TutorialDrawerComponent (ngOnChanges state reset, open boundaries for id 0 and '', 404 vs 500 branches, publish/unpublish payload and message fallback, delete), TutorialDetailsComponent (viewMode branch in ngOnInit, update/publish message fallbacks, delete -> router.navigate), TutorialsListComponent (search, delete-all, refresh, selection reset, error paths) and AddTutorialComponent (create payload, submitted flag, reset). Coverage measured with karma-coverage: 100% lines (127/127), 100% branches (18/18), well above the 70% target. No application file was modified - git status shows only *.spec.ts changes.",
+  "test_files": [
+    {
+      "file_path": "src/app/services/tutorial.service.spec.ts",
+      "type": "unit",
+      "description": "Rewritten: every CRUD method's HTTP verb, url, body and error path; empty-collection, id 0 and empty-search boundaries; one skipped KNOWN-DEFECT spec for unencoded search terms."
+    },
+    {
+      "file_path": "src/app/interceptors/api.interceptor.spec.ts",
+      "type": "unit",
+      "description": "Added real assertions (the three original specs asserted nothing) plus leading-slash, empty-path, absolute-url, header/body preservation and error propagation cases."
+    },
+    {
+      "file_path": "src/app/components/tutorial-drawer/tutorial-drawer.component.behaviour.spec.ts",
+      "type": "unit",
+      "description": "New: open getter boundaries, ngOnChanges state reset, 404 vs 500 load branches, publish/unpublish payload + message fallback, delete success/failure, close event."
+    },
+    {
+      "file_path": "src/app/components/tutorial-details/tutorial-details.component.behaviour.spec.ts",
+      "type": "unit",
+      "description": "New: viewMode branch in ngOnInit with a stubbed ActivatedRoute, update/updatePublished message fallbacks and failure paths, delete -> router.navigate(['/tutorials']); one skipped KNOWN-DEFECT spec for empty api responses."
+    },
+    {
+      "file_path": "src/app/components/tutorials-list/tutorials-list.component.behaviour.spec.ts",
+      "type": "unit",
+      "description": "New: initial load, search by title (populated / empty / error), delete-all then reload, refreshList and closeDrawer selection resets."
+    },
+    {
+      "file_path": "src/app/components/add-tutorial/add-tutorial.component.behaviour.spec.ts",
+      "type": "unit",
+      "description": "New: create payload contains only title+description, submitted flag on success vs 400, form reset by newTutorial."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "title": "Story not implemented: no GET /api/health call and no \"API: ok\" in the footer",
+      "description": "The project-specific instruction for this run asks for a GET /api/health endpoint whose result is shown as \"API: ok\" in the page footer. Nothing in src/ implements it: there is no health service, no component reads a health endpoint, and src/app/app.component.html renders a footer containing only '(c) Tutorial Manager' and 'Built with Angular'. This repo is also frontend-only (an Angular SPA talking to an external API at environment.apiUrl), so the server side of the story has no home here either.",
+      "file": "src/app/app.component.html",
+      "test": "",
+      "evidence": "grep for 'health' across src/ returns no match; src/app/app.component.html lines 8-13 contain the whole footer markup with no API status element.",
+      "story_id": "",
+      "source": "analysis"
+    },
+    {
+      "severity": "medium",
+      "title": "TutorialDetailsComponent.updatePublished / updateTutorial throw on an empty API response",
+      "description": "Both success handlers read `res.message` with no null guard. When the API answers a PUT with an empty body (a 204, or a 200 with no JSON), `res` is null and `res.message` throws a TypeError inside the subscribe callback: the published flag is never flipped and no confirmation message is shown, so the UI silently shows a stale state after a successful save. TutorialDrawerComponent does guard this (`res && res.message`), which makes the omission here look accidental rather than intentional.",
+      "file": "src/app/components/tutorial-details/tutorial-details.component.ts",
+      "test": "src/app/components/tutorial-details/tutorial-details.component.behaviour.spec.ts -> TutorialDetailsComponent (behaviour) updatePublished falls back to a default message when the api returns an empty body",
+      "evidence": "With the xit re-enabled the spec fails: \"Expected '' to be 'The status was updated successfully!'\" (src/app/components/tutorial-details/tutorial-details.component.ts:58 `this.message = res.message ? ... : ...`). component.currentTutorial.published also stays false. Kept as a skipped KNOWN-DEFECT spec.",
+      "story_id": "",
+      "source": "test"
+    },
+    {
+      "severity": "low",
+      "title": "TutorialService.findByTitle does not url-encode the search term",
+      "description": "findByTitle builds the url by string interpolation (`${baseUrl}?title=${title}`) instead of using HttpParams. A search term containing a space, '&', '#' or '=' is sent raw, so the server receives a mis-parsed query (e.g. 'ng & forms' becomes title='ng ' plus a stray ' forms' parameter) and the user gets wrong search results.",
+      "file": "src/app/services/tutorial.service.ts",
+      "test": "src/app/services/tutorial.service.spec.ts -> TutorialService findByTitle url-encodes a search term containing a space and an ampersand",
+      "evidence": "With the xit re-enabled the spec fails: \"Expected '/tutorials?title=ng & forms' to be '/tutorials?title=ng%20%26%20forms'\" (src/app/services/tutorial.service.ts:40). Kept as a skipped KNOWN-DEFECT spec.",
+      "story_id": "",
+      "source": "test"
+    },
+    {
+      "severity": "medium",
+      "title": "Pre-existing failure: TutorialService spec had no HttpClient provider",
+      "description": "Before this phase, `npm run test` reported 1 FAILED / 25 SUCCESS: 'TutorialService should be created' threw NullInjectorError: No provider for HttpClient!, because the generated spec called TestBed.configureTestingModule({}) without HttpClientTestingModule. That is a broken test rather than an application defect, so per CLAUDE.md section 5 it was fixed in place (the spec file is a test file) rather than reported red.",
+      "file": "src/app/services/tutorial.service.spec.ts",
+      "test": "TutorialService should be created",
+      "evidence": "Baseline run: \"TOTAL: 1 FAILED, 25 SUCCESS\" with \"NullInjectorError: R3InjectorError(DynamicTestModule)[TutorialService -> HttpClient -> HttpClient]\".",
+      "story_id": "",
+      "source": "analysis"
+    },
+    {
+      "severity": "low",
+      "title": "Pre-existing assertion-free specs in api.interceptor.spec.ts",
+      "description": "All three original ApiInterceptor specs contained no expect() call - Karma warned \"Spec '...' has no expectations\" for each. They could only fail via httpMock.verify(), so they did not actually pin the rewriting behaviour. Fixed in place (test file) and extended.",
+      "file": "src/app/interceptors/api.interceptor.spec.ts",
+      "test": "ApiInterceptor prefixes relative urls with the configured api url",
+      "evidence": "Baseline run log: \"WARN: 'Spec 'ApiInterceptor leaves absolute urls untouched' has no expectations.'\" (and the same for the other two).",
+      "story_id": "",
+      "source": "analysis"
+    }
+  ],
+  "quarantined": [],
+  "self_reported": {
+    "passed": 95,
+    "failed": 0,
+    "skipped": 2
+  },
+  "report_path": ".test-gen/plan/unit.md",
+  "blockers": []
+}
