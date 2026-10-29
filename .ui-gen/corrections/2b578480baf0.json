@@ -1,0 +1,57 @@
+{
+  "trace_id": "2b578480baf0",
+  "branch": "ui-correction/2b578480baf0",
+  "maintenance_branch": "ui-correction/2b578480baf0",
+  "status": "SUCCESS",
+  "summary": "The footer health text is now green when `apiStatus === 'ok'` and red otherwise (covering both `unavailable` and the pre-response `unknown`), via `is-ok`/`is-error` class bindings in `app.component.html` and matching rules in `app.component.css`. Reading taken: \"not ok\" = any status other than `ok`. Applied the existing rule that backend health is surfaced as `API: <status>` in the footer — text and fallbacks unchanged.",
+  "files_changed": [
+    "src/app/app.component.css",
+    "src/app/app.component.html"
+  ],
+  "lines_changed": 14,
+  "blockers": [],
+  "conventions": [],
+  "visual_check": {
+    "verdict": "pass",
+    "evidence": "On /tutorials the footer renders \"API: unavailable\" in red (#dc2626) via the .is-error class, confirming the non-ok state is colour-coded; the template applies .is-ok (#16a34a green) when apiStatus === 'ok'.",
+    "screenshot_path": "/tmp/actual.png"
+  },
+  "context_sharing": {
+    "target": "frontend",
+    "branch": "ui-correction/2b578480baf0",
+    "base_path": "/api",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/health",
+        "request_fields": [],
+        "response_fields": [
+          {
+            "name": "status",
+            "type": "string"
+          }
+        ],
+        "purpose": "Report backend health; shown in the app footer as 'API: <status>'."
+      }
+    ],
+    "types": {
+      "Health": [
+        {
+          "name": "status",
+          "type": "string"
+        }
+      ]
+    },
+    "notes": "HealthService requests the relative path '/health'; the ApiInterceptor prefixes environment.apiUrl (base '/api'). app.component.ts shows 'unknown' before a response, the raw `status` value when present, and 'unavailable' on any request error — so the response must literally contain {\"status\": \"ok\"} for the footer to read 'API: ok'. The endpoint itself is not implemented in this repository."
+  },
+  "usage": {
+    "num_turns": 8,
+    "duration_ms": 18155,
+    "total_cost_usd": 0.2744613,
+    "input_tokens": 3156,
+    "output_tokens": 1487,
+    "cache_creation_input_tokens": 33842,
+    "cache_read_input_tokens": 123941,
+    "is_error": false
+  }
+}
