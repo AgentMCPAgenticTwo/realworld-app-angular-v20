@@ -25,3 +25,9 @@
 .app-footer-note {
   opacity: 0.8;
 }
+
+.app-footer-health {
+  margin-right: 0.75rem;
+  font-weight: 600;
+  color: var(--tm-muted, #6b7280);
+}
