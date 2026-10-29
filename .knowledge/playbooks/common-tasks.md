@@ -4,10 +4,10 @@ title: Common tasks
 description: Where to go to change routes, API calls, the data model, the styling or the detail drawer.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [playbook, howto]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-29T09:53:52Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T13:16:13Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 9b034fe57d550b8f66d54b93e29362baf23c00ae
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ e44c79b17c2cab7387ac4928b2086bb0ef8c39c7
     title: Codebase knowledge graph
 status: stable
 ---
@@ -110,5 +110,9 @@ from that input, so there is no separate visibility flag. See
 # Run and test
 
 * `npm start` — dev server on `ng serve`.
-* `npm test` — Karma + Jasmine over every `*.spec.ts`.
+* `npm test` — Karma + Jasmine over every `*.spec.ts` under `src`, which includes the
+  `src/app/integration/*.integration.spec.ts` suite.
+* `npm run test:e2e` — Playwright over `e2e/`; `playwright.config.ts` starts
+  `npm run start` itself (`reuseExistingServer: true`) and every spec stubs the backend
+  through `stubApi` in `e2e/support/api-stub.ts`. See [Testing](/modules/testing.md).
 * `npm run build` — production bundle.

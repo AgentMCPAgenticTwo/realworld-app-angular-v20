@@ -4,10 +4,10 @@ title: Project conventions
 description: Naming, file-layout, styling, template and HTTP-subscription conventions used throughout the app.
 resource: https://github.com/AgentMCPAgenticTwo/realworld-app-angular-v20/tree/main/src/app
 tags: [conventions, angular, typescript, styling]
-generated: { by: sage-maintenance/claude-code, at: 2026-10-28T04:04:01Z }
+generated: { by: sage-maintenance/claude-code, at: 2026-10-29T13:16:13Z }
 sources:
   - id: cbm-graph
-    resource: codebase-memory-mcp project realworld-app-angular-v20 @ 6878a25eb09b858a48f0956018c2d975cf0182bb
+    resource: codebase-memory-mcp project realworld-app-angular-v20 @ e44c79b17c2cab7387ac4928b2086bb0ef8c39c7
     title: Codebase knowledge graph
 status: stable
 ---
@@ -102,6 +102,17 @@ from the `tm-*` layer.
 * **Not yet migrated** — `tutorial-drawer.component.html` still uses plain Bootstrap
   markup and no `tm-*` class; see
   [tutorial-drawer](/modules/components-tutorial-drawer.md).
+
+# Tests
+
+* Unit specs sit beside the code as `<name>.spec.ts`; the richer per-screen suites use
+  the `<name>.component.behaviour.spec.ts` suffix. Integration specs live in
+  `src/app/integration/` as `*.integration.spec.ts`. Browser specs live in `e2e/` as
+  `*.spec.ts` and are run by Playwright, never by Karma.
+* HTTP is mocked at the boundary only: `HttpClientTestingModule` /
+  `HttpTestingController` in Karma, `page.route` via `stubApi` in Playwright. No test
+  calls the real backend.
+* Test names are sentences describing behaviour. See [Testing](/modules/testing.md).
 
 # Templates
 
